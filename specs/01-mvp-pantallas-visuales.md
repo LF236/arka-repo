@@ -1,6 +1,6 @@
 # SPEC 01 — MVP Pantallas Visuales
 
-> **Status:** Approved
+> **Status:** Implemented
 > **Depends on:** —
 > **Date:** 2026-11-05
 > **Objective:** Implementar las cinco pantallas visuales de Arcade Vault (Biblioteca, Detalle, Reproductor, Auth, Salón de la Fama) como páginas Next.js 16 con App Router, sin lógica de juego real.
@@ -105,23 +105,23 @@ interface UserContextValue {
 
 ## Acceptance criteria
 
-- [ ] `npm run dev` arranca sin errores en consola
-- [ ] `npm run build` completa sin errores TypeScript
-- [ ] `/` muestra hero "ARCADE VAULT", buscador, 5 chips de categoría y 8 cards de juegos
-- [ ] Los chips filtran las cards por categoría; el buscador filtra por nombre
-- [ ] Hacer click en una card navega a `/juego/[id]` con el cover y datos correctos
-- [ ] `/juego/[id]` muestra el stat-strip (Partidas, Mejor global, Dificultad) y el leaderboard con 10 filas
-- [ ] Botón "JUGAR AHORA" en `/juego/[id]` navega a `/juego/[id]/jugar`
-- [ ] `/juego/[id]/jugar` muestra el HUD y la pantalla CRT con animaciones en marcha
-- [ ] Pulsar "PAUSA" congela el score y muestra el overlay "EN PAUSA"; "REANUDAR" lo reactiva
-- [ ] Pulsar "FIN" muestra el modal "FIN DEL JUEGO" con la puntuación final
-- [ ] En el modal, guardar una puntuación escribe en localStorage `av_scores` y muestra "PUNTUACIÓN GUARDADA_"
-- [ ] `/auth` muestra las dos tabs; al hacer submit navega a `/` y el Nav muestra el nombre del usuario
-- [ ] Botón "JUGAR COMO INVITADO" cierra el Auth y vuelve a `/`
-- [ ] `/salon` muestra el pódium y la tabla; cambiar la tab de juego actualiza los datos
-- [ ] Si hay usuario logueado, `/salon` muestra la fila amarilla con su nombre
-- [ ] El Nav es sticky; en viewport <840px aparece el hamburger y el panel lateral se abre/cierra
-- [ ] `npm run lint` pasa sin errores
+- [X] `npm run dev` arranca sin errores en consola
+- [X] `npm run build` completa sin errores TypeScript
+- [X] `/` muestra hero "ARCADE VAULT", buscador, 5 chips de categoría y 8 cards de juegos
+- [X] Los chips filtran las cards por categoría; el buscador filtra por nombre
+- [X] Hacer click en una card navega a `/juego/[id]` con el cover y datos correctos
+- [X] `/juego/[id]` muestra el stat-strip (Partidas, Mejor global, Dificultad) y el leaderboard con 10 filas
+- [X] Botón "JUGAR AHORA" en `/juego/[id]` navega a `/juego/[id]/jugar`
+- [X] `/juego/[id]/jugar` muestra el HUD y la pantalla CRT con animaciones en marcha
+- [X] Pulsar "PAUSA" congela el score y muestra el overlay "EN PAUSA"; "REANUDAR" lo reactiva
+- [X] Pulsar "FIN" muestra el modal "FIN DEL JUEGO" con la puntuación final
+- [X] En el modal, guardar una puntuación escribe en localStorage `av_scores` y muestra "PUNTUACIÓN GUARDADA_"
+- [X] `/auth` muestra las dos tabs; al hacer submit navega a `/` y el Nav muestra el nombre del usuario
+- [X] Botón "JUGAR COMO INVITADO" cierra el Auth y vuelve a `/`
+- [X] `/salon` muestra el pódium y la tabla; cambiar la tab de juego actualiza los datos
+- [X] Si hay usuario logueado, `/salon` muestra la fila amarilla con su nombre
+- [X] El Nav es sticky; en viewport <840px aparece el hamburger y el panel lateral se abre/cierra
+- [X] `npm run lint` pasa sin errores
 
 ---
 
