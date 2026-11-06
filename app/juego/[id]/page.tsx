@@ -1,12 +1,11 @@
 'use client';
 
-import { use } from 'react';
+import { use, Suspense } from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { GAMES, seededScores } from '@/lib/data';
 
-export default function GameDetail({ params }: PageProps<'/juego/[id]'>) {
-  const { id } = use(params);
+function GameDetailContent({ id }: { id: string }) {
   const game = GAMES.find(g => g.id === id);
   if (!game) notFound();
 
@@ -71,5 +70,18 @@ export default function GameDetail({ params }: PageProps<'/juego/[id]'>) {
         </div>
       </aside>
     </div>
+  );
+}
+
+function GameDetailLoader({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
+  return <GameDetailContent id={id} />;
+}
+
+export default function GameDetail({ params }: PageProps<'/juego/[id]'>) {
+  return (
+    <Suspense>
+      <GameDetailLoader params={params} />
+    </Suspense>
   );
 }
