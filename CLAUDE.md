@@ -25,6 +25,10 @@ Next.js 16 App Router with React 19 and TypeScript strict mode.
 - Tailwind CSS v4 loaded via `@tailwindcss/turbopack` (not PostCSS — don't add a postcss config).
 - Turbopack is the bundler; `next.config.ts` configures it directly.
 
+## Screenshots (Playwright)
+
+Always save screenshots to `.playwright-screenshots/` and reference them with `@.playwright-screenshots/`.
+
 ## Critical: This is NOT a standard Next.js version
 
 Next.js 16 has breaking changes vs training data. Before writing any Next.js code, read the relevant guide in `node_modules/next/dist/docs/`. The `LayoutProps` generic type (`LayoutProps<"/">`) is one example of the new API shape.

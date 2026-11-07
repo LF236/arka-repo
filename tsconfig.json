@@ -19,7 +19,8 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "@.playwright-screenshots/*": ["./.playwright-screenshots/*"]
     }
   },
   "include": [
