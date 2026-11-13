@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { useUser } from "@/components/UserContext";
 import { initGame } from "./game";
+import { insertScore } from "@/lib/supabase/leaderboard";
 import type { GameController } from "./game";
 
 interface GameProps {
@@ -11,13 +11,14 @@ interface GameProps {
 }
 
 export default function AsteroidesGame({ gameId }: GameProps) {
-  const { user } = useUser();
   const [score, setScore] = useState(0);
   const [lives, setLives] = useState(3);
   const [level, setLevel] = useState(1);
   const [paused, setPaused] = useState(false);
   const [over, setOver] = useState(false);
-  const [name, setName] = useState(user?.name ?? "INVITADO");
+  const [name, setName] = useState(
+    () => localStorage.getItem("av_player_name") ?? "",
+  );
   const [saved, setSaved] = useState(false);
   const [gameKey, setGameKey] = useState(0);
 
@@ -61,10 +62,14 @@ export default function AsteroidesGame({ gameId }: GameProps) {
   };
 
   const saveScore = () => {
+    void insertScore("asteroides", name, score);
     try {
-      const all = JSON.parse(localStorage.getItem("av_scores") || "[]");
-      all.push({ game: gameId, score, name, at: Date.now() });
-      localStorage.setItem("av_scores", JSON.stringify(all));
+      const all = JSON.parse(
+        localStorage.getItem("av_scores_asteroides") || "[]",
+      );
+      all.push({ score, name, at: Date.now() });
+      localStorage.setItem("av_scores_asteroides", JSON.stringify(all));
+      localStorage.setItem("av_player_name", name);
     } catch {}
     setSaved(true);
   };
@@ -77,7 +82,7 @@ export default function AsteroidesGame({ gameId }: GameProps) {
     setPaused(false);
     setOver(false);
     setSaved(false);
-    setName(user?.name ?? "INVITADO");
+    setName(localStorage.getItem("av_player_name") ?? "");
     setGameKey((k) => k + 1);
   };
 
