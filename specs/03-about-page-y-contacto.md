@@ -1,6 +1,6 @@
 # SPEC 03 — About Page y Formulario de Contacto con Resend
 
-> **Status:** Approbed
+> **Status:** Implemented
 > **Depends on:** SPEC 01, SPEC 02
 > **Date:** 2026-11-07
 > **Objective:** Implementar la página `/acerca` usando el template `references/templates/home-about/about.jsx` y conectar su formulario de contacto a Resend para enviar correos reales.
