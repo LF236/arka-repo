@@ -1,14 +1,31 @@
-'use client';
+"use client";
 
-import { use, useState, useEffect, Suspense } from 'react';
-import Link from 'next/link';
-import { notFound } from 'next/navigation';
-import { GAMES } from '@/lib/data';
-import { useUser } from '@/components/UserContext';
+import dynamic from "next/dynamic";
+import { use, useState, useEffect, Suspense, type ComponentType } from "react";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { GAMES } from "@/lib/data";
+import { useUser } from "@/components/UserContext";
+
+const CANVAS_GAMES: Record<string, ComponentType<{ gameId: string }>> = {
+  asteroides: dynamic<{ gameId: string }>(
+    () => import("@/components/games/asteroides"),
+    { ssr: false },
+  ),
+};
 
 function GamePlayerContent({ id }: { id: string }) {
-  const game = GAMES.find(g => g.id === id);
+  const game = GAMES.find((g) => g.id === id);
   if (!game) notFound();
+
+  const CanvasGame = CANVAS_GAMES[id] ?? null;
+  if (CanvasGame) return <CanvasGame gameId={id} />;
+
+  return <MockPlayerContent id={id} />;
+}
+
+function MockPlayerContent({ id }: { id: string }) {
+  const game = GAMES.find((g) => g.id === id)!;
 
   const { user } = useUser();
   const [score, setScore] = useState(0);
@@ -16,24 +33,27 @@ function GamePlayerContent({ id }: { id: string }) {
   const [level, setLevel] = useState(1);
   const [paused, setPaused] = useState(false);
   const [over, setOver] = useState(false);
-  const [name, setName] = useState(user?.name ?? 'INVITADO');
+  const [name, setName] = useState(user?.name ?? "INVITADO");
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     if (over || paused) return;
-    const t = setInterval(() => setScore(s => s + Math.floor(10 + Math.random() * 90)), 220);
+    const t = setInterval(
+      () => setScore((s) => s + Math.floor(10 + Math.random() * 90)),
+      220,
+    );
     return () => clearInterval(t);
   }, [over, paused]);
 
   useEffect(() => {
-    if (score > 0 && score % 2500 < 100) setLevel(l => l + 1);
+    if (score > 0 && score % 2500 < 100) setLevel((l) => l + 1);
   }, [score]);
 
   const saveScore = () => {
     try {
-      const all = JSON.parse(localStorage.getItem('av_scores') || '[]');
+      const all = JSON.parse(localStorage.getItem("av_scores") || "[]");
       all.push({ game: game.id, score, name, at: Date.now() });
-      localStorage.setItem('av_scores', JSON.stringify(all));
+      localStorage.setItem("av_scores", JSON.stringify(all));
     } catch {}
     setSaved(true);
   };
@@ -44,36 +64,42 @@ function GamePlayerContent({ id }: { id: string }) {
     setPaused(false);
     setOver(false);
     setSaved(false);
-    setName(user?.name ?? 'INVITADO');
+    setName(user?.name ?? "INVITADO");
   };
 
   return (
     <div className="av-player fade-in">
       <div className="player-hud">
-        <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
+        <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
           <div className="hud-stat">
             <div className="l">Jugador</div>
-            <div className="v" style={{ color: 'var(--ink)' }}>{name}</div>
+            <div className="v" style={{ color: "var(--ink)" }}>
+              {name}
+            </div>
           </div>
           <div className="hud-stat">
             <div className="l">Puntuación</div>
-            <div className="v">{score.toLocaleString('es-ES')}</div>
+            <div className="v">{score.toLocaleString("es-ES")}</div>
           </div>
           <div className="hud-stat lives">
             <div className="l">Vidas</div>
-            <div className="v">{'♥ '.repeat(lives).trim() || '—'}</div>
+            <div className="v">{"♥ ".repeat(lives).trim() || "—"}</div>
           </div>
           <div className="hud-stat level">
             <div className="l">Nivel</div>
-            <div className="v">{String(level).padStart(2, '0')}</div>
+            <div className="v">{String(level).padStart(2, "0")}</div>
           </div>
         </div>
         <div className="hud-actions">
-          <button className="btn yellow" onClick={() => setPaused(p => !p)}>
-            {paused ? 'REANUDAR' : 'PAUSA'}
+          <button className="btn yellow" onClick={() => setPaused((p) => !p)}>
+            {paused ? "REANUDAR" : "PAUSA"}
           </button>
-          <button className="btn magenta" onClick={() => setOver(true)}>FIN</button>
-          <Link href={`/juego/${game.id}`} className="btn ghost">SALIR</Link>
+          <button className="btn magenta" onClick={() => setOver(true)}>
+            FIN
+          </button>
+          <Link href={`/juego/${game.id}`} className="btn ghost">
+            SALIR
+          </Link>
         </div>
       </div>
 
@@ -87,10 +113,23 @@ function GamePlayerContent({ id }: { id: string }) {
             <div className="player-ship" />
           </div>
           {paused && (
-            <div className="crt-content" style={{ background: 'rgba(0,0,0,0.6)', zIndex: 5 }}>
+            <div
+              className="crt-content"
+              style={{ background: "rgba(0,0,0,0.6)", zIndex: 5 }}
+            >
               <div>
-                <div className="pixel neon-yellow" style={{ fontSize: 22 }}>EN PAUSA</div>
-                <div className="mono" style={{ fontSize: 11, color: 'var(--ink-dim)', marginTop: 10, letterSpacing: '0.16em' }}>
+                <div className="pixel neon-yellow" style={{ fontSize: 22 }}>
+                  EN PAUSA
+                </div>
+                <div
+                  className="mono"
+                  style={{
+                    fontSize: 11,
+                    color: "var(--ink-dim)",
+                    marginTop: 10,
+                    letterSpacing: "0.16em",
+                  }}
+                >
                   PULSA REANUDAR PARA CONTINUAR
                 </div>
               </div>
@@ -109,22 +148,30 @@ function GamePlayerContent({ id }: { id: string }) {
           <div className="modal">
             <h2>FIN DEL JUEGO</h2>
             <div className="final-label">PUNTUACIÓN FINAL</div>
-            <div className="final">{score.toLocaleString('es-ES')}</div>
+            <div className="final">{score.toLocaleString("es-ES")}</div>
             {!saved ? (
               <div className="input-row">
                 <input
                   value={name}
-                  onChange={e => setName(e.target.value.toUpperCase().slice(0, 10))}
+                  onChange={(e) =>
+                    setName(e.target.value.toUpperCase().slice(0, 10))
+                  }
                   placeholder="TUS INICIALES"
                 />
-                <button className="btn yellow" onClick={saveScore}>GUARDAR PUNTUACIÓN</button>
+                <button className="btn yellow" onClick={saveScore}>
+                  GUARDAR PUNTUACIÓN
+                </button>
               </div>
             ) : (
               <div className="toast-saved">▸ PUNTUACIÓN GUARDADA_</div>
             )}
             <div className="actions">
-              <button className="btn" onClick={restart}>JUGAR DE NUEVO</button>
-              <Link href="/" className="btn magenta">VOLVER AL VAULT</Link>
+              <button className="btn" onClick={restart}>
+                JUGAR DE NUEVO
+              </button>
+              <Link href="/" className="btn magenta">
+                VOLVER AL VAULT
+              </Link>
             </div>
           </div>
         </div>
@@ -138,7 +185,7 @@ function GamePlayerLoader({ params }: { params: Promise<{ id: string }> }) {
   return <GamePlayerContent id={id} />;
 }
 
-export default function GamePlayer({ params }: PageProps<'/juego/[id]/jugar'>) {
+export default function GamePlayer({ params }: PageProps<"/juego/[id]/jugar">) {
   return (
     <Suspense>
       <GamePlayerLoader params={params} />

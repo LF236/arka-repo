@@ -1,6 +1,6 @@
 # SPEC 05 — Asteroides: Integración del Juego Canvas en Next.js
 
-> **Status:** Aprobbed
+> **Status:** Implemented
 > **Depends on:** SPEC 01, SPEC 02
 > **Date:** 2026-11-13
 > **Objective:** Integrar el juego Asteroides (canvas vanilla JS 800×600) en la plataforma Next.js, con un componente React que carga el juego vía dynamic import, recibe notificaciones de estado (score, lives, level, gameover) por callbacks, controla la pausa por ref, y muestra su propio HUD externo al canvas coexistiendo con el HUD interno del juego.
@@ -145,19 +145,19 @@ interface GameProps {
 
 ## Acceptance criteria
 
-- [ ] `/juego/asteroides` carga la ficha con el título "ASTEROIDES" y el botón "JUGAR AHORA"
-- [ ] `/juego/asteroides` y `/juego/rocas` muestran fichas distintas e independientes
-- [ ] `/juego/asteroides/jugar` carga el canvas 800×600 con el juego funcionando (nave, asteroides, balas)
-- [ ] El HUD externo de React (`.player-hud`) muestra nombre, score, vidas (♥), nivel — se actualizan en tiempo real
-- [ ] El canvas sigue mostrando su propio HUD interno (SCORE, NIVEL, iconos de vida dibujados en canvas)
-- [ ] El botón PAUSA congela el juego (el canvas deja de animar) y el mismo botón lo reanuda
-- [ ] Al perder todas las vidas, el canvas muestra el overlay "GAME OVER" y React abre el modal de guardar puntuación
-- [ ] El modal permite ingresar nombre, guardar en localStorage y reiniciar el juego limpio (score=0, lives=3, level=1)
-- [ ] "JUGAR DE NUEVO" reinicia el juego correctamente sin fuga de listeners o frames
-- [ ] El input de teclado (flechas + espacio) funciona sin necesidad de hacer clic en el canvas primero
-- [ ] `/juego/rocas/jugar` y el resto de IDs siguen mostrando el mock existente sin cambios
-- [ ] `npm run build` completa sin errores TypeScript
-- [ ] `npm run lint` pasa sin errores
+- [X] `/juego/asteroides` carga la ficha con el título "ASTEROIDES" y el botón "JUGAR AHORA"
+- [X] `/juego/asteroides` y `/juego/rocas` muestran fichas distintas e independientes
+- [X] `/juego/asteroides/jugar` carga el canvas 800×600 con el juego funcionando (nave, asteroides, balas)
+- [X] El HUD externo de React (`.player-hud`) muestra nombre, score, vidas (♥), nivel — se actualizan en tiempo real
+- [X] El canvas sigue mostrando su propio HUD interno (SCORE, NIVEL, iconos de vida dibujados en canvas)
+- [X] El botón PAUSA congela el juego (el canvas deja de animar) y el mismo botón lo reanuda
+- [X] Al perder todas las vidas, el canvas muestra el overlay "GAME OVER" y React abre el modal de guardar puntuación
+- [X] El modal permite ingresar nombre, guardar en localStorage y reiniciar el juego limpio (score=0, lives=3, level=1)
+- [X] "JUGAR DE NUEVO" reinicia el juego correctamente sin fuga de listeners o frames
+- [X] El input de teclado (flechas + espacio) funciona sin necesidad de hacer clic en el canvas primero
+- [X] `/juego/rocas/jugar` y el resto de IDs siguen mostrando el mock existente sin cambios
+- [X] `npm run build` completa sin errores TypeScript
+- [X] `npm run lint` pasa sin errores
 
 ---
 
