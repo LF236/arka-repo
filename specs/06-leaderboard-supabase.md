@@ -1,6 +1,6 @@
 # SPEC 06 — Leaderboard y Tabla de Juegos con Supabase
 
-> **Status:** Approbed
+> **Status:** Implemented
 > **Depends on:** SPEC 04, SPEC 05
 > **Date:** 2026-11-13
 > **Objective:** Conectar el Salón de la Fama y la ficha de Asteroides con Supabase, mediante tablas `games`+`scores`, leaderboard híbrido filtrado a juegos reales, y guardado de puntuaciones con persistencia del nombre en localStorage.
@@ -161,21 +161,21 @@ La función global `fetchTopScores()` (sin `gameSlug`) retorna scores de todos l
 
 ## Acceptance criteria
 
-- [ ] Tablas `games` y `scores` existen en Supabase con RLS habilitado (políticas de SELECT público y INSERT público en `scores`)
-- [ ] `games` contiene la fila `{slug: 'asteroides', name: 'ASTEROIDES', active: true}`
-- [ ] `/salon` muestra tab "GLOBAL" por defecto con scores de todos los juegos reales, columna de juego visible
-- [ ] `/salon` muestra tab "ASTEROIDES" que filtra scores por `game_slug = 'asteroides'`
-- [ ] Los juegos mock (bloque-buster, caida, serpentina, etc.) NO aparecen en ningún tab de `/salon`
-- [ ] `/salon` con Supabase vacío muestra "Sin puntuaciones aún" (no seededScores)
-- [ ] `/salon` con Supabase caído muestra seededScores como fallback visible (no pantalla rota)
-- [ ] `/juego/asteroides` muestra leaderboard lateral con datos de Supabase; si vacío muestra estado vacío; si Supabase falla muestra seededScores
-- [ ] `/juego/rocas` y otros juegos mock mantienen comportamiento actual con seededScores (sin cambios)
-- [ ] El catálogo (`/`) y biblioteca muestran todos los juegos de `lib/data.ts` sin cambios
-- [ ] Al finalizar partida de Asteroides, el modal pre-llena el nombre desde localStorage `av_player_name`
-- [ ] Al guardar puntuación: fila insertada en `scores` de Supabase + cache en `av_scores_asteroides` + nombre en `av_player_name`
-- [ ] Fallo de insert en Supabase no bloquea la UI ni muestra error al jugador
-- [ ] `npm run build` completa sin errores TypeScript
-- [ ] `npm run lint` pasa sin errores
+- [X] Tablas `games` y `scores` existen en Supabase con RLS habilitado (políticas de SELECT público y INSERT público en `scores`)
+- [X] `games` contiene la fila `{slug: 'asteroides', name: 'ASTEROIDES', active: true}`
+- [X] `/salon` muestra tab "GLOBAL" por defecto con scores de todos los juegos reales, columna de juego visible
+- [X] `/salon` muestra tab "ASTEROIDES" que filtra scores por `game_slug = 'asteroides'`
+- [X] Los juegos mock (bloque-buster, caida, serpentina, etc.) NO aparecen en ningún tab de `/salon`
+- [X] `/salon` con Supabase vacío muestra "Sin puntuaciones aún" (no seededScores)
+- [X] `/salon` con Supabase caído muestra seededScores como fallback visible (no pantalla rota)
+- [X] `/juego/asteroides` muestra leaderboard lateral con datos de Supabase; si vacío muestra estado vacío; si Supabase falla muestra seededScores
+- [X] `/juego/rocas` y otros juegos mock mantienen comportamiento actual con seededScores (sin cambios)
+- [X] El catálogo (`/`) y biblioteca muestran todos los juegos de `lib/data.ts` sin cambios
+- [X] Al finalizar partida de Asteroides, el modal pre-llena el nombre desde localStorage `av_player_name`
+- [X] Al guardar puntuación: fila insertada en `scores` de Supabase + cache en `av_scores_asteroides` + nombre en `av_player_name`
+- [X] Fallo de insert en Supabase no bloquea la UI ni muestra error al jugador
+- [X] `npm run build` completa sin errores TypeScript
+- [X] `npm run lint` pasa sin errores
 
 ---
 
