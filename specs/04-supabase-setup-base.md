@@ -1,6 +1,6 @@
 # SPEC 04 — Supabase: Setup Base
 
-> **Status:** Aprobbed
+> **Status:** Implemented
 > **Depends on:** SPEC 01
 > **Date:** 2026-11-12
 > **Objective:** Instalar y configurar el cliente de Supabase (browser + server) en la aplicación Next.js, con variables de entorno documentadas, listo para ser consumido por specs futuros de autenticación y base de datos.
