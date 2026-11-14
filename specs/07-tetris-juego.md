@@ -1,6 +1,6 @@
 # SPEC 07 — TETRIS: Integración del Juego y Leaderboard
 
-> **Status:** Approved
+> **Status:** Implemented
 > **Depends on:** SPEC 05, SPEC 06
 > **Date:** 2026-11-13
 > **Objetivo:** Integrar el juego TETRIS (canvas vanilla JS, dos canvases) en la plataforma Arcade Vault con leaderboard conectado a Supabase.

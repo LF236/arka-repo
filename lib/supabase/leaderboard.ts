@@ -1,7 +1,33 @@
-import { ScoreRow } from "@/lib/data";
+import { Game, GAMES, ScoreRow } from "@/lib/data";
 import { createClient } from "./client";
 
 export type ScoreRowWithGame = ScoreRow & { game?: string };
+
+export async function fetchCatalog(): Promise<Game[]> {
+  try {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("games")
+      .select("slug, name, short, long, cat, cover, color, best, plays")
+      .eq("active", true)
+      .order("name");
+    if (error) throw error;
+    return (data ?? []).map((r) => ({
+      id: r.slug as string,
+      title: r.name as string,
+      short: r.short as string,
+      long: r.long as string,
+      cat: r.cat as string,
+      cover: r.cover as string,
+      color: r.color as Game["color"],
+      best: r.best as number,
+      plays: r.plays as string,
+    }));
+  } catch (err) {
+    console.error("[leaderboard] fetchCatalog failed:", err);
+    return GAMES;
+  }
+}
 
 export async function fetchRealGames(): Promise<string[]> {
   try {
@@ -78,14 +104,12 @@ export async function insertScore(
 ): Promise<void> {
   try {
     const supabase = createClient();
-    const { error } = await supabase
-      .from("scores")
-      .insert({
-        game_slug: gameSlug,
-        player_name: playerName,
-        score,
-        user_id: null,
-      });
+    const { error } = await supabase.from("scores").insert({
+      game_slug: gameSlug,
+      player_name: playerName,
+      score,
+      user_id: null,
+    });
     if (error) throw error;
   } catch (err) {
     console.error("[leaderboard] insertScore failed:", err);
