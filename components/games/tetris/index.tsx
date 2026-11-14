@@ -123,18 +123,26 @@ export default function TetrisGame({ gameId }: GameProps) {
       </div>
 
       <div className="crt">
-        <div
-          className="crt-screen"
-          style={{ display: "flex", gap: 16, alignItems: "flex-start" }}
-        >
-          <canvas
-            ref={boardCanvasRef}
-            width={300}
-            height={600}
-            tabIndex={0}
-            autoFocus
-          />
-          <canvas ref={nextCanvasRef} width={120} height={120} />
+        <div className="crt-screen" style={{ position: "relative" }}>
+          <div
+            style={{
+              display: "flex",
+              gap: 16,
+              alignItems: "flex-start",
+              justifyContent: "center",
+              height: "100%",
+              paddingTop: 24,
+            }}
+          >
+            <canvas
+              ref={boardCanvasRef}
+              width={300}
+              height={600}
+              tabIndex={0}
+              autoFocus
+            />
+            <canvas ref={nextCanvasRef} width={120} height={120} />
+          </div>
           {paused && (
             <div
               className="crt-content"

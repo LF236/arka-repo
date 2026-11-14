@@ -12,6 +12,10 @@ const CANVAS_GAMES: Record<string, ComponentType<{ gameId: string }>> = {
     () => import("@/components/games/asteroides"),
     { ssr: false },
   ),
+  tetris: dynamic<{ gameId: string }>(
+    () => import("@/components/games/tetris"),
+    { ssr: false },
+  ),
 };
 
 function GamePlayerContent({ id }: { id: string }) {
