@@ -32,6 +32,7 @@ Todo cambio funcional pasa por un spec en `specs/NN-slug.md` (estructura en `.cl
 
 - `/spec` y `/spec-impl` vienen de `Klerith/fernando-skills` (fuente en `.agents/skills/`, symlinks en `.claude/skills/`, versiones en `skills-lock.json`). No editarlos a mano.
 - `/add-game` es local del proyecto (`.claude/skills/add-game/SKILL.md`).
+- Agente `game-planner` (`.claude/agents/game-planner.md`, memoria en `.claude/agent-memory/game-planner/`): sugiere el próximo juego y lo anota en `references/games-suggestions-todo.md`. Flujo: `game-planner` → `/add-game` → `/spec-impl`.
 - Un spec = una rama `spec-NN-slug` = un PR a `main`. Al terminar, `Status: Implemented` en el spec.
 
 ## Architecture
@@ -88,7 +89,8 @@ Añadir un juego: `/add-game` → entrada en `GAMES`, `components/games/<slug>/`
 - `started-games/` — código fuente original (vanilla JS) de los juegos a portar.
 - `source-assets/` — assets originales.
 - `templates/` — maquetas JSX/HTML del diseño.
-- `implemented-games.md` — tabla de juegos implementados (ID, título, categoría, color, descripción). Única excepción al solo lectura: actualizarla al añadir un juego.
+- `implemented-games.md` — tabla de juegos implementados (ID, título, categoría, color, descripción). Excepción al solo lectura: actualizarla al añadir un juego.
+- `games-suggestions-todo.md` — TODO de juegos sugeridos. Excepción al solo lectura: lo mantiene el agente `game-planner`.
 
 No importar desde `references/` ni modificar el resto.
 
