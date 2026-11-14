@@ -111,6 +111,17 @@ export const GAMES: Game[] = [
     plays: "6.4K",
   },
   {
+    id: "arkanoid",
+    title: "ARKANOID",
+    short: "Rompe todos los bloques antes de perder tus 3 vidas.",
+    long: "Mueve la paleta con el ratón o las flechas y rebota el núcleo de plasma para destruir cinco niveles de bloques cromados. Cada nivel reorganiza los patrones y acelera la bola. Con solo tres vidas y el techo cada vez más cerca, ¿puedes llegar al último nivel y completar el Arkanoid?",
+    cat: "ARCADE",
+    cover: "cover-bricks",
+    color: "magenta",
+    best: 0,
+    plays: "0",
+  },
+  {
     id: "tetris",
     title: "TETRIS",
     short: "Encaja los 7 tetrominos clásicos sin que el pozo se llene.",

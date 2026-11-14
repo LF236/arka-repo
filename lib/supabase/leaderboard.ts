@@ -12,17 +12,20 @@ export async function fetchCatalog(): Promise<Game[]> {
       .eq("active", true)
       .order("name");
     if (error) throw error;
-    return (data ?? []).map((r) => ({
-      id: r.slug as string,
-      title: r.name as string,
-      short: r.short as string,
-      long: r.long as string,
-      cat: r.cat as string,
-      cover: r.cover as string,
-      color: r.color as Game["color"],
-      best: r.best as number,
-      plays: r.plays as string,
-    }));
+    return (data ?? []).map((r) => {
+      const local = GAMES.find((g) => g.id === r.slug);
+      return {
+        id: r.slug as string,
+        title: r.name as string,
+        short: (r.short as string) || local?.short || "",
+        long: (r.long as string) || local?.long || "",
+        cat: (r.cat as string) || local?.cat || "",
+        cover: (r.cover as string) || local?.cover || "",
+        color: (r.color as Game["color"]) || local?.color || "cyan",
+        best: (r.best as number) ?? local?.best ?? 0,
+        plays: (r.plays as string) || local?.plays || "0",
+      };
+    });
   } catch (err) {
     console.error("[leaderboard] fetchCatalog failed:", err);
     return GAMES;
