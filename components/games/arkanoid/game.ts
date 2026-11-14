@@ -366,6 +366,12 @@ export function initGame(
   };
 
   const onKeyDown = (e: KeyboardEvent) => {
+    if (
+      ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space"].includes(
+        e.code,
+      )
+    )
+      e.preventDefault();
     if (e.key in keys) keys[e.key] = true;
   };
 

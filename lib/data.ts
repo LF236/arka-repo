@@ -143,6 +143,17 @@ export const GAMES: Game[] = [
     best: 24,
     plays: "4.2K",
   },
+  {
+    id: "snake",
+    title: "SNAKE",
+    short: "Come frutas, crece y no toques las paredes.",
+    long: "Una serpiente de píxeles recorre una cuadrícula de 32×32 celdas coleccionando frutas del atlas. Cada bocado la alarga y acelera su ritmo. Las paredes son letales y morder tu propia cola significa el fin. ¿Cuántas frutas aguantas antes de que la velocidad te supere?",
+    cat: "ARCADE",
+    cover: "cover-snake",
+    color: "magenta",
+    best: 0,
+    plays: "0",
+  },
 ];
 
 export const CATS: string[] = [
