@@ -111,6 +111,17 @@ export const GAMES: Game[] = [
     plays: "6.4K",
   },
   {
+    id: "tetris",
+    title: "TETRIS",
+    short: "Encaja los 7 tetrominos clásicos sin que el pozo se llene.",
+    long: "Siete piezas caen desde las alturas: encástralas sin huecos para limpiar líneas y sumar puntos. Pieza fantasma y hard drop te dan control total; la velocidad aumenta cada 10 líneas. ¿Cuánto aguantas cuando el techo no perdona?",
+    cat: "PUZZLE",
+    cover: "cover-tetro",
+    color: "cyan",
+    best: 0,
+    plays: "0",
+  },
+  {
     id: "duelo-pixel",
     title: "DUELO PIXEL",
     short: "Dos paletas. Una pelota. Reflejos máximos.",
