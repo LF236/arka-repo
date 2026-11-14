@@ -3,13 +3,18 @@
 import { use, Suspense, useState, useEffect } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { GAMES, ScoreRow, seededScores } from "@/lib/data";
-import { fetchRealGames, fetchTopScores } from "@/lib/supabase/leaderboard";
+import { Game, GAMES, ScoreRow, seededScores } from "@/lib/data";
+import {
+  fetchCatalog,
+  fetchRealGames,
+  fetchTopScores,
+} from "@/lib/supabase/leaderboard";
 
 function GameDetailContent({ id }: { id: string }) {
-  const game = GAMES.find((g) => g.id === id);
-  if (!game) notFound();
-
+  const [game, setGame] = useState<Game | null>(
+    () => GAMES.find((g) => g.id === id) ?? null,
+  );
+  const [catalogLoaded, setCatalogLoaded] = useState(false);
   const [scores, setScores] = useState<ScoreRow[]>(() =>
     seededScores(id.length * 17 + 3, 10),
   );
@@ -19,6 +24,14 @@ function GameDetailContent({ id }: { id: string }) {
     let cancelled = false;
 
     const load = async () => {
+      const catalog = await fetchCatalog();
+      if (cancelled) return;
+      const found = catalog.find((g) => g.id === id) ?? null;
+      setGame(found);
+      setCatalogLoaded(true);
+
+      if (!found) return;
+
       const realGames = await fetchRealGames();
       if (!realGames.includes(id) || cancelled) return;
 
@@ -38,6 +51,9 @@ function GameDetailContent({ id }: { id: string }) {
       cancelled = true;
     };
   }, [id]);
+
+  if (catalogLoaded && !game) notFound();
+  if (!game) return null;
 
   return (
     <div className="av-detail fade-in">

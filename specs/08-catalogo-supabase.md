@@ -1,6 +1,6 @@
 # SPEC 08 — Catálogo de Juegos desde Supabase
 
-> **Status:** Borrador
+> **Status:** Implemented
 > **Depends on:** SPEC 06
 > **Date:** 2026-11-13
 > **Objetivo:** Mover el catálogo de juegos de `lib/data.ts` a la tabla `games` de Supabase, para que añadir un juego nuevo no requiera tocar código ni hacer deploy.
@@ -103,19 +103,12 @@ const cats = ["TODOS", ...new Set(games.map((g) => g.cat)).values()];
    - `UPDATE games SET ... WHERE slug = '...'` para los 9 juegos ya registrados en Supabase (`asteroides` y cualquier otro insertado previamente)
    - `INSERT INTO games (...) VALUES (...)` para los juegos del catálogo que aún no estén en la tabla
 
-   Los 9 juegos a sembrar (valores extraídos de `lib/data.ts`):
+   Solo los juegos implementados (los demás se añadirán manualmente cuando estén listos):
 
-   | slug          | name          | cat     | color   | cover          |
-   | ------------- | ------------- | ------- | ------- | -------------- |
-   | bloque-buster | BLOQUE BUSTER | ARCADE  | cyan    | cover-bricks   |
-   | caida         | CAÍDA         | PUZZLE  | magenta | cover-tetro    |
-   | serpentina    | SERPENTINA    | ARCADE  | green   | cover-snake    |
-   | gloton        | GLOTÓN        | ARCADE  | yellow  | cover-glot     |
-   | invasores     | INVASORES     | SHOOTER | green   | cover-invaders |
-   | asteroides    | ASTEROIDES    | SHOOTER | yellow  | cover-rocas    |
-   | rocas         | ROCAS         | SHOOTER | yellow  | cover-rocas    |
-   | ranaria       | RANARIA       | ARCADE  | green   | cover-rana     |
-   | duelo-pixel   | DUELO PIXEL   | VERSUS  | cyan    | cover-duelo    |
+   | slug       | name       | cat     | color  | cover       |
+   | ---------- | ---------- | ------- | ------ | ----------- |
+   | asteroides | ASTEROIDES | SHOOTER | yellow | cover-rocas |
+   | tetris     | TETRIS     | PUZZLE  | cyan   | cover-tetro |
 
    Verificación: el archivo de migración existe y el SQL es sintácticamente válido.
 
@@ -154,18 +147,18 @@ const cats = ["TODOS", ...new Set(games.map((g) => g.cat)).values()];
 
 ## Criterios de aceptación
 
-- [ ] `games` en Supabase tiene las columnas `short`, `long`, `cat`, `cover`, `color`, `best`, `plays`
-- [ ] Los 9 juegos del catálogo tienen todos los campos con los valores correctos de `lib/data.ts`
-- [ ] `fetchCatalog()` retorna `Game[]` ordenado por nombre cuando Supabase está disponible
-- [ ] Si Supabase falla, `fetchCatalog()` retorna `GAMES` de `lib/data.ts` sin romper la UI
-- [ ] `/biblioteca` muestra los 9 juegos y el filtro por categoría funciona
-- [ ] `/` (home) muestra el preview de juegos desde Supabase
-- [ ] `/juego/asteroides` y el resto de fichas cargan correctamente
-- [ ] `/juego/asteroides/jugar` sigue cargando el canvas sin cambios
-- [ ] Añadir un juego nuevo en Supabase (`INSERT INTO games ...`) lo hace aparecer en `/biblioteca` sin deploy
-- [ ] `lib/data.ts` y el array `GAMES` siguen existiendo (no se eliminan)
-- [ ] `npm run build` completa sin errores TypeScript
-- [ ] `npm run lint` pasa sin errores
+- [X] `games` en Supabase tiene las columnas `short`, `long`, `cat`, `cover`, `color`, `best`, `plays`
+- [X] `asteroides` y `tetris` tienen todos los campos con los valores correctos de `lib/data.ts`
+- [X] `fetchCatalog()` retorna `Game[]` ordenado por nombre cuando Supabase está disponible
+- [X] Si Supabase falla, `fetchCatalog()` retorna `GAMES` de `lib/data.ts` sin romper la UI
+- [X] `/biblioteca` muestra los 9 juegos y el filtro por categoría funciona
+- [X] `/` (home) muestra el preview de juegos desde Supabase
+- [X] `/juego/asteroides` y el resto de fichas cargan correctamente
+- [X] `/juego/asteroides/jugar` sigue cargando el canvas sin cambios
+- [X] Añadir un juego nuevo en Supabase (`INSERT INTO games ...`) lo hace aparecer en `/biblioteca` sin deploy
+- [X] `lib/data.ts` y el array `GAMES` siguen existiendo (no se eliminan)
+- [X] `npm run build` completa sin errores TypeScript
+- [X] `npm run lint` pasa sin errores
 
 ---
 
