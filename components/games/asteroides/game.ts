@@ -563,6 +563,12 @@ export function initGame(
   for (const k of Object.keys(justPressed)) delete justPressed[k];
 
   const onKeyDown = (e: KeyboardEvent) => {
+    if (
+      ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space"].includes(
+        e.code,
+      )
+    )
+      e.preventDefault();
     if (!keys[e.code]) justPressed[e.code] = true;
     keys[e.code] = true;
   };
