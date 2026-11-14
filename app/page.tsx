@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { GAMES } from "@/lib/data";
+import { GAMES, type Game } from "@/lib/data";
 import { seededScores } from "@/lib/data";
+import { fetchCatalog } from "@/lib/supabase/leaderboard";
 
 const RECENT_SCORES = [
   { p: "NEONFOX", g: "Caída", s: 184220, t: "hace 2 min", c: "magenta" },
@@ -233,6 +234,11 @@ function MiniCard({
 export default function Home() {
   useReveal();
   const router = useRouter();
+  const [games, setGames] = useState<Game[]>(GAMES);
+
+  useEffect(() => {
+    fetchCatalog().then(setGames);
+  }, []);
 
   return (
     <div className="home fade-in">
@@ -329,7 +335,7 @@ export default function Home() {
           <div className="section-rule" />
         </div>
         <div className="mini-rail">
-          {GAMES.slice(0, 6).map((g) => (
+          {games.slice(0, 6).map((g) => (
             <MiniCard
               key={g.id}
               game={g}

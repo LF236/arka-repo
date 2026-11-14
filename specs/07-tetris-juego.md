@@ -149,21 +149,21 @@ export function initGame(
 
 ## Criterios de aceptación
 
-- [ ] `lib/data.ts` incluye la entrada `{ id: 'tetris', color: 'cyan', cat: 'PUZZLE', ... }` con todos los campos
-- [ ] El placeholder `caida` en `lib/data.ts` no ha sido modificado
-- [ ] `components/games/tetris/game.ts` exporta `initGame` con la firma `(boardCanvas, nextCanvas, callbacks): GameController`
-- [ ] `components/games/tetris/index.tsx` renderiza el tablero (300×600) y el preview (120×120) sin errores
-- [ ] El HUD externo muestra score, líneas limpias y nivel — se actualizan en tiempo real durante la partida
-- [ ] El botón PAUSA congela el juego (canvas deja de animar) y el mismo botón lo reanuda
-- [ ] `/juego/tetris/jugar` carga sin errores de SSR ni de consola
-- [ ] Al terminar una partida, el score aparece en Supabase: `SELECT * FROM scores WHERE game_slug = 'tetris'`
-- [ ] El modal pre-llena el nombre desde `localStorage.getItem('av_player_name')`
-- [ ] Al guardar, el nombre se persiste en `av_player_name` y el score en `av_scores_tetris`
-- [ ] `/salon` muestra tab `TETRIS` y filtra scores del juego
-- [ ] `/juego/tetris` muestra leaderboard lateral con datos de Supabase (o estado vacío si no hay scores)
-- [ ] Los juegos ya existentes (asteroides, etc.) siguen funcionando sin cambios
-- [ ] `npm run build` completa sin errores TypeScript
-- [ ] `npm run lint` pasa sin errores
+- [X] `lib/data.ts` incluye la entrada `{ id: 'tetris', color: 'cyan', cat: 'PUZZLE', ... }` con todos los campos
+- [X] El placeholder `caida` en `lib/data.ts` no ha sido modificado
+- [X] `components/games/tetris/game.ts` exporta `initGame` con la firma `(boardCanvas, nextCanvas, callbacks): GameController`
+- [X] `components/games/tetris/index.tsx` renderiza el tablero (300×600) y el preview (120×120) sin errores
+- [X] El HUD externo muestra score, líneas limpias y nivel — se actualizan en tiempo real durante la partida
+- [X] El botón PAUSA congela el juego (canvas deja de animar) y el mismo botón lo reanuda
+- [X] `/juego/tetris/jugar` carga sin errores de SSR ni de consola
+- [X] Al terminar una partida, el score aparece en Supabase: `SELECT * FROM scores WHERE game_slug = 'tetris'`
+- [X] El modal pre-llena el nombre desde `localStorage.getItem('av_player_name')`
+- [X] Al guardar, el nombre se persiste en `av_player_name` y el score en `av_scores_tetris`
+- [X] `/salon` muestra tab `TETRIS` y filtra scores del juego
+- [X] `/juego/tetris` muestra leaderboard lateral con datos de Supabase (o estado vacío si no hay scores)
+- [X] Los juegos ya existentes (asteroides, etc.) siguen funcionando sin cambios
+- [X] `npm run build` completa sin errores TypeScript
+- [X] `npm run lint` pasa sin errores
 
 ---
 

@@ -4,7 +4,8 @@ import dynamic from "next/dynamic";
 import { use, useState, useEffect, Suspense, type ComponentType } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { GAMES } from "@/lib/data";
+import { Game, GAMES } from "@/lib/data";
+import { fetchCatalog } from "@/lib/supabase/leaderboard";
 import { useUser } from "@/components/UserContext";
 
 const CANVAS_GAMES: Record<string, ComponentType<{ gameId: string }>> = {
@@ -19,18 +20,28 @@ const CANVAS_GAMES: Record<string, ComponentType<{ gameId: string }>> = {
 };
 
 function GamePlayerContent({ id }: { id: string }) {
-  const game = GAMES.find((g) => g.id === id);
-  if (!game) notFound();
+  const [game, setGame] = useState<Game | null>(
+    () => GAMES.find((g) => g.id === id) ?? null,
+  );
+  const [catalogLoaded, setCatalogLoaded] = useState(false);
+
+  useEffect(() => {
+    fetchCatalog().then((catalog) => {
+      setGame(catalog.find((g) => g.id === id) ?? null);
+      setCatalogLoaded(true);
+    });
+  }, [id]);
+
+  if (catalogLoaded && !game) notFound();
+  if (!game) return null;
 
   const CanvasGame = CANVAS_GAMES[id] ?? null;
   if (CanvasGame) return <CanvasGame gameId={id} />;
 
-  return <MockPlayerContent id={id} />;
+  return <MockPlayerContent game={game} />;
 }
 
-function MockPlayerContent({ id }: { id: string }) {
-  const game = GAMES.find((g) => g.id === id)!;
-
+function MockPlayerContent({ game }: { game: Game }) {
   const { user } = useUser();
   const [score, setScore] = useState(0);
   const [lives] = useState(3);

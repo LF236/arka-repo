@@ -1,6 +1,6 @@
 # SPEC 08 — Catálogo de Juegos desde Supabase
 
-> **Status:** Approved
+> **Status:** Implemented
 > **Depends on:** SPEC 06
 > **Date:** 2026-11-13
 > **Objetivo:** Mover el catálogo de juegos de `lib/data.ts` a la tabla `games` de Supabase, para que añadir un juego nuevo no requiera tocar código ni hacer deploy.
@@ -147,18 +147,18 @@ const cats = ["TODOS", ...new Set(games.map((g) => g.cat)).values()];
 
 ## Criterios de aceptación
 
-- [ ] `games` en Supabase tiene las columnas `short`, `long`, `cat`, `cover`, `color`, `best`, `plays`
-- [ ] `asteroides` y `tetris` tienen todos los campos con los valores correctos de `lib/data.ts`
-- [ ] `fetchCatalog()` retorna `Game[]` ordenado por nombre cuando Supabase está disponible
-- [ ] Si Supabase falla, `fetchCatalog()` retorna `GAMES` de `lib/data.ts` sin romper la UI
-- [ ] `/biblioteca` muestra los 9 juegos y el filtro por categoría funciona
-- [ ] `/` (home) muestra el preview de juegos desde Supabase
-- [ ] `/juego/asteroides` y el resto de fichas cargan correctamente
-- [ ] `/juego/asteroides/jugar` sigue cargando el canvas sin cambios
-- [ ] Añadir un juego nuevo en Supabase (`INSERT INTO games ...`) lo hace aparecer en `/biblioteca` sin deploy
-- [ ] `lib/data.ts` y el array `GAMES` siguen existiendo (no se eliminan)
-- [ ] `npm run build` completa sin errores TypeScript
-- [ ] `npm run lint` pasa sin errores
+- [X] `games` en Supabase tiene las columnas `short`, `long`, `cat`, `cover`, `color`, `best`, `plays`
+- [X] `asteroides` y `tetris` tienen todos los campos con los valores correctos de `lib/data.ts`
+- [X] `fetchCatalog()` retorna `Game[]` ordenado por nombre cuando Supabase está disponible
+- [X] Si Supabase falla, `fetchCatalog()` retorna `GAMES` de `lib/data.ts` sin romper la UI
+- [X] `/biblioteca` muestra los 9 juegos y el filtro por categoría funciona
+- [X] `/` (home) muestra el preview de juegos desde Supabase
+- [X] `/juego/asteroides` y el resto de fichas cargan correctamente
+- [X] `/juego/asteroides/jugar` sigue cargando el canvas sin cambios
+- [X] Añadir un juego nuevo en Supabase (`INSERT INTO games ...`) lo hace aparecer en `/biblioteca` sin deploy
+- [X] `lib/data.ts` y el array `GAMES` siguen existiendo (no se eliminan)
+- [X] `npm run build` completa sin errores TypeScript
+- [X] `npm run lint` pasa sin errores
 
 ---
 
