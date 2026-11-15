@@ -107,7 +107,12 @@ Antes de tocar `app/layout.tsx` o cualquier API de Next, lee la guía correspond
 
 - `const { skin } = useSkin()`.
 - Pasa `{ skin }` a `initGame` y llama `controllerRef.current?.setSkin(skin)` en un `useEffect` que depende de `skin`. El efecto que crea el juego **no** depende de `skin`: cambiar de skin no reinicia la partida.
-- No añadas un selector dentro del juego: el selector es el global.
+- **Selector de temas obligatorio en cada juego.** `index.tsx` renderiza un selector de skins en el HUD de React (fuera del canvas), visible durante la partida. Reglas:
+  - Lista solo los skins disponibles del juego (claves de `PALETTES`), con `SKIN_LABELS`, y marca el activo (`aria-pressed`).
+  - Usa `const { skin, setSkin } = useSkin()`: no crea estado propio ni otra clave de `localStorage`. Queda sincronizado con el selector global de `Nav`, que se mantiene.
+  - Cambiar de skin desde él no reinicia ni pausa la partida, y no roba el foco del teclado al juego (`blur()` tras el click o `tabIndex` adecuado).
+  - Estilos: clases compartidas `skin-selector*` en `app/globals.css`, creadas una sola vez con las variables del tema; si ya existen, reutilízalas.
+  - Un juego sin selector propio no está terminado: no lo marques `✅` en el registro.
 
 **Juegos con sprites** (arkanoid entero, la fruta de snake)
 
@@ -115,14 +120,15 @@ Antes de tocar `app/layout.tsx` o cualquier API de Next, lee la guía correspond
 - `neon`, `retro` y `pastel` se dibujan con primitivas de canvas o recoloreando el sprite en un canvas offscreen cacheado por skin (nunca por frame).
 - Sin assets nuevos: no añadas imágenes a `public/`.
 
-**No cambia:** reglas, puntuación, velocidades, tamaño de canvas, callbacks, `insertScore`, claves `av_scores_*`, HUD de React fuera del canvas.
+**No cambia:** reglas, puntuación, velocidades, tamaño de canvas, callbacks, `insertScore`, claves `av_scores_*`, HUD de React fuera del canvas (salvo añadir el selector de temas).
 
 ## 7. Verificar
 
 1. `npm run build` y `npm run lint`. Si fallan, arréglalo; si no puedes, repórtalo con la salida.
 2. Grep de colores literales (`#[0-9a-fA-F]{3,8}`, `rgb(`, `rgba(`) en `components/games/<slug>/game.ts`: debe salir vacío.
 3. Relee `skins.ts`: los tres obligatorios existen, todas las claves de `Palette` tienen valor en cada skin, y los contrastes de la sección 4 se cumplen.
-4. Confirma con `git status` que no tocaste otros juegos.
+4. Confirma que `index.tsx` renderiza el selector de temas del juego y que usa `setSkin` de `useSkin()`.
+5. Confirma con `git status` que no tocaste otros juegos.
 
 No puedes ver el canvas: no afirmes que "se ve bien". Reporta lo que comprobaste y deja la prueba visual al usuario.
 
