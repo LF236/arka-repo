@@ -204,26 +204,26 @@ La imagen `fruits.png` se carga una vez con `new Image()` antes de iniciar el lo
 
 ## Criterios de aceptación
 
-- [ ] `public/snake/fruits.png` existe y es accesible en runtime
-- [ ] `lib/data.ts` incluye la entrada `{ id: 'snake', color: 'magenta', ... }` con todos los campos
-- [ ] La entrada mock `serpentina` permanece inalterada en `lib/data.ts`
-- [ ] `components/games/snake/game.ts` exporta `initGame` con la firma `GameController`
-- [ ] La serpiente se mueve a ritmo de `setInterval` (no `requestAnimationFrame`)
-- [ ] Colisión con pared → game over (las paredes matan)
-- [ ] Colisión con cuerpo propio → game over
-- [ ] La fruta se muestra como sprite del atlas (`fruits.png`), tipo aleatorio en cada spawn
-- [ ] Score aumenta +10 por fruta; la velocidad aumenta cada 5 frutas hasta el cap de 50 ms
-- [ ] `components/games/snake/index.tsx` renderiza el canvas 800×800 y actualiza el HUD sin errores
-- [ ] `/juego/snake/jugar` carga sin errores de SSR ni de consola
-- [ ] Al terminar una partida, el score aparece en Supabase: `SELECT * FROM scores WHERE game_slug = 'snake'`
-- [ ] El modal pre-llena el nombre desde `localStorage.getItem('av_player_name')`
-- [ ] Al guardar, el nombre se persiste en `av_player_name` y el score en `av_scores_snake`
-- [ ] "JUGAR DE NUEVO" reinicia el juego limpio sin fuga de timers ni listeners
-- [ ] `/salon` muestra tab `SNAKE` y filtra scores del juego
-- [ ] `/juego/snake` muestra leaderboard lateral con datos de Supabase (o estado vacío si no hay scores)
-- [ ] Los juegos ya existentes (asteroides, arkanoid, tetris) siguen funcionando sin cambios
-- [ ] `npm run build` completa sin errores TypeScript
-- [ ] `npm run lint` pasa sin errores
+- [X]`public/snake/fruits.png` existe y es accesible en runtime
+- [X]`lib/data.ts` incluye la entrada `{ id: 'snake', color: 'magenta', ... }` con todos los campos
+- [X]La entrada mock `serpentina` permanece inalterada en `lib/data.ts`
+- [X]`components/games/snake/game.ts` exporta `initGame` con la firma `GameController`
+- [X]La serpiente se mueve a ritmo de `setInterval` (no `requestAnimationFrame`)
+- [X]Colisión con pared → game over (las paredes matan)
+- [X]Colisión con cuerpo propio → game over
+- [X]La fruta se muestra como sprite del atlas (`fruits.png`), tipo aleatorio en cada spawn
+- [X]Score aumenta +10 por fruta; la velocidad aumenta cada 5 frutas hasta el cap de 50 ms
+- [X]`components/games/snake/index.tsx` renderiza el canvas 800×800 y actualiza el HUD sin errores
+- [X]`/juego/snake/jugar` carga sin errores de SSR ni de consola
+- [X]Al terminar una partida, el score aparece en Supabase: `SELECT * FROM scores WHERE game_slug = 'snake'`
+- [X]El modal pre-llena el nombre desde `localStorage.getItem('av_player_name')`
+- [X]Al guardar, el nombre se persiste en `av_player_name` y el score en `av_scores_snake`
+- [X]"JUGAR DE NUEVO" reinicia el juego limpio sin fuga de timers ni listeners
+- [X]`/salon` muestra tab `SNAKE` y filtra scores del juego
+- [X]`/juego/snake` muestra leaderboard lateral con datos de Supabase (o estado vacío si no hay scores)
+- [X]Los juegos ya existentes (asteroides, arkanoid, tetris) siguen funcionando sin cambios
+- [X]`npm run build` completa sin errores TypeScript
+- [X]`npm run lint` pasa sin errores
 
 ---
 

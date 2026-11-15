@@ -1,6 +1,6 @@
 # SPEC 11 — Controles táctiles: gamepad virtual para móvil
 
-> **Status:** Approved
+> **Status:** Implemented
 > **Depends on:** SPEC 05, SPEC 07, SPEC 09, SPEC 10
 > **Date:** 2026-11-15
 > **Objetivo:** Hacer jugables los 4 juegos canvas en pantallas táctiles bajo el breakpoint `lg` de Tailwind, con el canvas arriba y un gamepad virtual (D-pad + 2 botones) abajo.
@@ -112,25 +112,25 @@ Comportamiento de eventos:
 
 ## Criterios de aceptación
 
-- [ ] `components/GamePad.tsx` existe y es reutilizable por cualquier juego mediante `GamePadProps`.
-- [ ] El gamepad es visible a <1024px (`lg`) y oculto a ≥1024px.
-- [ ] Los 4 `game.ts` no tienen cambios de lógica (el diff de `game.ts` es vacío).
-- [ ] Snake: las 4 direcciones del D-pad controlan la serpiente.
-- [ ] Tetris: ←/→ mueven, ↓ baja (repite al mantener), ↑ y B giran, A hace hard drop.
-- [ ] Arkanoid: ←/→ mueven la paleta de forma continua al mantener; el mouse sigue funcionando en escritorio.
-- [ ] Asteroides: ←/→ rotan, ↑ empuja, A dispara; se pueden pulsar dos botones a la vez.
-- [ ] Botones A/B no declarados por un juego aparecen deshabilitados.
-- [ ] Soltar el dedo, cancelar el toque, pausar, game over o desmontar libera todas las teclas (sin movimiento "pegado").
-- [ ] Tocar el gamepad no hace scroll de página ni zoom por doble toque.
-- [ ] Bajo `lg`, PAUSA/REANUDAR, FIN y SALIR están en el pie del gamepad y funcionan; `hud-actions` no se duplica.
-- [ ] El canvas escala al ancho disponible sin cambiar su resolución interna ni su proporción.
-- [ ] A 390×844 y 360×640 no hay scroll horizontal y canvas + gamepad caben en pantalla sin scroll vertical.
-- [ ] El gamepad es legible con los skins `clasico`, `neon` y `retro`.
-- [ ] Bajo `lg`, en `/juego/[id]/jugar` no se ve la navbar; a ≥1024px sí.
-- [ ] Bajo `lg`, REGRESAR junto al selector de TEMA navega a `/biblioteca`; a ≥1024px no se muestra.
-- [ ] Hay separación visible (28px) entre el canvas y el gamepad.
-- [ ] El modal de game over (input de nombre, guardar, jugar de nuevo) es utilizable en móvil.
-- [ ] `npm run build` y `npm run lint` pasan sin errores.
+- [X]`components/GamePad.tsx` existe y es reutilizable por cualquier juego mediante `GamePadProps`.
+- [X]El gamepad es visible a <1024px (`lg`) y oculto a ≥1024px.
+- [X]Los 4 `game.ts` no tienen cambios de lógica (el diff de `game.ts` es vacío).
+- [X]Snake: las 4 direcciones del D-pad controlan la serpiente.
+- [X]Tetris: ←/→ mueven, ↓ baja (repite al mantener), ↑ y B giran, A hace hard drop.
+- [X]Arkanoid: ←/→ mueven la paleta de forma continua al mantener; el mouse sigue funcionando en escritorio.
+- [X]Asteroides: ←/→ rotan, ↑ empuja, A dispara; se pueden pulsar dos botones a la vez.
+- [X]Botones A/B no declarados por un juego aparecen deshabilitados.
+- [X]Soltar el dedo, cancelar el toque, pausar, game over o desmontar libera todas las teclas (sin movimiento "pegado").
+- [X]Tocar el gamepad no hace scroll de página ni zoom por doble toque.
+- [X]Bajo `lg`, PAUSA/REANUDAR, FIN y SALIR están en el pie del gamepad y funcionan; `hud-actions` no se duplica.
+- [X]El canvas escala al ancho disponible sin cambiar su resolución interna ni su proporción.
+- [X]A 390×844 y 360×640 no hay scroll horizontal y canvas + gamepad caben en pantalla sin scroll vertical.
+- [X]El gamepad es legible con los skins `clasico`, `neon` y `retro`.
+- [X]Bajo `lg`, en `/juego/[id]/jugar` no se ve la navbar; a ≥1024px sí.
+- [X]Bajo `lg`, REGRESAR junto al selector de TEMA navega a `/biblioteca`; a ≥1024px no se muestra.
+- [X]Hay separación visible (28px) entre el canvas y el gamepad.
+- [X]El modal de game over (input de nombre, guardar, jugar de nuevo) es utilizable en móvil.
+- [X]`npm run build` y `npm run lint` pasan sin errores.
 
 ---
 
