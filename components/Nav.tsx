@@ -4,12 +4,29 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useUser } from './UserContext';
+import { useSkin } from './SkinContext';
+import { SKIN_LABELS, type SkinId } from '@/lib/skins';
+
+const SKIN_IDS = Object.keys(SKIN_LABELS) as SkinId[];
 
 export default function Nav() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
   const { user, signOut } = useUser();
+  const { skin, setSkin } = useSkin();
+
+  const skinButtons = SKIN_IDS.map((id) => (
+    <button
+      key={id}
+      type="button"
+      className={`skin-selector-btn${skin === id ? ' active' : ''}`}
+      aria-pressed={skin === id}
+      onClick={() => setSkin(id)}
+    >
+      {SKIN_LABELS[id]}
+    </button>
+  ));
 
   const isActive = (href: string) => {
     if (href === '/') return pathname === '/';
@@ -43,6 +60,10 @@ export default function Nav() {
         </div>
 
         <div className="spacer" />
+
+        <div className="skin-selector nav-skins" role="group" aria-label="Tema visual">
+          {skinButtons}
+        </div>
 
         <div className="coin-counter">
           <span className="coin" />
@@ -89,6 +110,10 @@ export default function Nav() {
         <Link href="/auth" className={isActive('/auth') ? 'active' : ''} onClick={close}>
           {user ? 'Cuenta' : 'Iniciar Sesión'}
         </Link>
+        <div className="skin-selector panel-skins" role="group" aria-label="Tema visual">
+          <span className="skin-selector-label">TEMA</span>
+          {skinButtons}
+        </div>
         <div style={{ flex: 1 }} />
         <div className="pixel" style={{ fontSize: 9, color: 'var(--ink-faint)', letterSpacing: '0.16em' }}>
           CRÉDITOS · 03

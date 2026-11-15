@@ -3598,3 +3598,51 @@ a {
     transform: rotate(360deg);
   }
 }
+
+/* ===== Selector de skins ===== */
+.skin-selector {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.skin-selector-label {
+  font-family: var(--pixel);
+  font-size: 9px;
+  color: var(--ink-dim);
+  letter-spacing: 0.12em;
+  margin-right: 4px;
+}
+.skin-selector-btn {
+  font-family: var(--pixel);
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  padding: 6px 8px;
+  background: var(--bg-2);
+  color: var(--ink-dim);
+  border: 1px solid var(--line-2);
+  cursor: pointer;
+}
+.skin-selector-btn:hover {
+  color: var(--ink);
+  border-color: var(--line);
+}
+.skin-selector-btn.active {
+  color: var(--cyan);
+  border-color: var(--cyan);
+  box-shadow: 0 0 8px rgba(0, 245, 255, 0.35);
+}
+.av-nav .nav-skins {
+  margin-right: 16px;
+}
+.av-mobile-panel .panel-skins {
+  margin-top: 16px;
+}
+@media (max-width: 840px) {
+  .av-nav .nav-skins {
+    display: none;
+  }
+}
+.av-player > .skin-selector {
+  margin: 12px 0;
+}

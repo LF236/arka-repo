@@ -32,6 +32,9 @@ Todo cambio funcional pasa por un spec en `specs/NN-slug.md` (estructura en `.cl
 
 - `/spec` y `/spec-impl` vienen de `Klerith/fernando-skills` (fuente en `.agents/skills/`, symlinks en `.claude/skills/`, versiones en `skills-lock.json`). No editarlos a mano.
 - `/add-game` es local del proyecto (`.claude/skills/add-game/SKILL.md`).
+- Agente `game-planner` (`.claude/agents/game-planner.md`, memoria en `.claude/agent-memory/game-planner/`): sugiere el próximo juego y lo anota en `references/games-suggestions-todo.md`. Flujo: `game-planner` → `/add-game` → `/spec-impl`.
+- Agente `game-jam` (`.claude/agents/game-jam.md`): recibe un tema, inventa un juego original y escribe 2–3 specs en `specs/game-jam/<game-id>/` (`01-…-juego`, `02-…-integracion`, `03-…-pulido` o `03-…-<feature>`). Corre con `model: sonnet`. Autónomo, sin preguntas, solo specs en `Borrador`. Para implementar: promover a `specs/NN-slug.md` y `/spec-impl`.
+- Agente `skin-designer` (`.claude/agents/skin-designer.md`): recibe el slug de **un** juego e implementa directamente sus skins (`clasico` default, `neon`, `retro`; `pastel` opcional), legibles en oscuro. Corre con `model: sonnet`. Sin spec, sin commits, sin preguntas; solo el juego pedido. Registro en `references/game-with-themes.md`. Crea la infra compartida (`lib/skins.ts`, `components/SkinContext.tsx`, selector en `Nav`) la primera vez.
 - Un spec = una rama `spec-NN-slug` = un PR a `main`. Al terminar, `Status: Implemented` en el spec.
 
 ## Architecture
@@ -79,7 +82,7 @@ Patrón fijo; `asteroides` es la implementación canónica:
 - Se carga siempre con `dynamic(..., { ssr: false })` (usa `localStorage` en el estado inicial).
 - Assets en `public/` (`public/games/arkanoid/`, `public/snake/`).
 
-Claves `localStorage`: `av_user`, `av_player_name`, `av_scores_<slug>` (y `av_scores` del player mock).
+Claves `localStorage`: `av_user`, `av_player_name`, `av_skin` (skin global), `av_scores_<slug>` (y `av_scores` del player mock).
 
 Añadir un juego: `/add-game` → entrada en `GAMES`, `components/games/<slug>/`, ruta `jugar`, registro en `CANVAS_GAMES` (`app/juego/[id]/jugar/page.tsx`), fila en `games`. `/salon` y `/juego/[id]` no requieren cambios.
 
@@ -88,7 +91,9 @@ Añadir un juego: `/add-game` → entrada en `GAMES`, `components/games/<slug>/`
 - `started-games/` — código fuente original (vanilla JS) de los juegos a portar.
 - `source-assets/` — assets originales.
 - `templates/` — maquetas JSX/HTML del diseño.
-- `implemented-games.md` — tabla de juegos implementados (ID, título, categoría, color, descripción). Única excepción al solo lectura: actualizarla al añadir un juego.
+- `implemented-games.md` — tabla de juegos implementados (ID, título, categoría, color, descripción). Excepción al solo lectura: actualizarla al añadir un juego.
+- `games-suggestions-todo.md` — TODO de juegos sugeridos. Excepción al solo lectura: lo mantiene el agente `game-planner`.
+- `game-with-themes.md` — qué juegos tienen ya cada skin. Excepción al solo lectura: lo mantiene el agente `skin-designer`.
 
 No importar desde `references/` ni modificar el resto.
 

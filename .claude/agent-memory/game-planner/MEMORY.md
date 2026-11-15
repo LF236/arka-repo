@@ -1,0 +1,2 @@
+- [Historial de sugerencias](project_suggestion_log.md) — 23 pendientes por nicho (D/F/R, líneas, pegas), recomendado y estado
+- [Candidatos evaluados](project_evaluated_candidates.md) — no sugeridos por nicho (motivo), reserva `sumo-neon`, mocks duplicados
