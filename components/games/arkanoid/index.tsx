@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import GamePad from "@/components/GamePad";
 import { initGame } from "./game";
 import { insertScore } from "@/lib/supabase/leaderboard";
 import { useSkin } from "@/components/SkinContext";
@@ -129,7 +130,7 @@ export default function ArkanoidGame({ gameId }: GameProps) {
             <div className="v">{String(level).padStart(2, "0")}</div>
           </div>
         </div>
-        <div className="hud-actions">
+        <div className="hud-actions max-lg:hidden">
           <button className="btn yellow" onClick={togglePause}>
             {paused ? "REANUDAR" : "PAUSA"}
           </button>
@@ -158,6 +159,9 @@ export default function ArkanoidGame({ gameId }: GameProps) {
             {SKIN_LABELS[id]}
           </button>
         ))}
+        <Link href="/biblioteca" className="btn ghost skin-back">
+          REGRESAR
+        </Link>
       </div>
 
       <div className="crt">
@@ -198,6 +202,16 @@ export default function ArkanoidGame({ gameId }: GameProps) {
           <span>CARGA · 1MB</span>
         </div>
       </div>
+
+      <GamePad
+        paused={paused}
+        over={over}
+        disableDown
+        disableUp
+        onTogglePause={togglePause}
+        onEnd={handleEnd}
+        exitHref={`/juego/${gameId}`}
+      />
 
       {over && (
         <div className="modal-bd">

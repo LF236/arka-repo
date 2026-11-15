@@ -44,7 +44,9 @@ export default function Nav() {
 
   return (
     <>
-      <nav className="av-nav">
+      <nav
+        className={`av-nav${/^\/juego\/[^/]+\/jugar$/.test(pathname) ? ' av-nav-game' : ''}`}
+      >
         <Link href="/" className="logo" onClick={close}>
           <div className="logo-mark" />
           <div className="logo-text neon-cyan">

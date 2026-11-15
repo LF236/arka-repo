@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import GamePad from "@/components/GamePad";
 import { initGame } from "./game";
 import { insertScore } from "@/lib/supabase/leaderboard";
 import { useSkin } from "@/components/SkinContext";
@@ -110,7 +111,7 @@ export default function SnakeGame({ gameId }: GameProps) {
             <div className="v">{score.toLocaleString("es-ES")}</div>
           </div>
         </div>
-        <div className="hud-actions">
+        <div className="hud-actions max-lg:hidden">
           <button className="btn yellow" onClick={togglePause}>
             {paused ? "REANUDAR" : "PAUSA"}
           </button>
@@ -139,6 +140,9 @@ export default function SnakeGame({ gameId }: GameProps) {
             {SKIN_LABELS[id]}
           </button>
         ))}
+        <Link href="/biblioteca" className="btn ghost skin-back">
+          REGRESAR
+        </Link>
       </div>
 
       <div className="crt" style={{ maxWidth: 848, margin: "0 auto" }}>
@@ -174,6 +178,14 @@ export default function SnakeGame({ gameId }: GameProps) {
           <span>CARGA · 1MB</span>
         </div>
       </div>
+
+      <GamePad
+        paused={paused}
+        over={over}
+        onTogglePause={togglePause}
+        onEnd={handleEnd}
+        exitHref={`/juego/${gameId}`}
+      />
 
       {over && (
         <div className="modal-bd">
