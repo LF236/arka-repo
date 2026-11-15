@@ -33,6 +33,7 @@ Todo cambio funcional pasa por un spec en `specs/NN-slug.md` (estructura en `.cl
 - `/spec` y `/spec-impl` vienen de `Klerith/fernando-skills` (fuente en `.agents/skills/`, symlinks en `.claude/skills/`, versiones en `skills-lock.json`). No editarlos a mano.
 - `/add-game` es local del proyecto (`.claude/skills/add-game/SKILL.md`).
 - Agente `game-planner` (`.claude/agents/game-planner.md`, memoria en `.claude/agent-memory/game-planner/`): sugiere el próximo juego y lo anota en `references/games-suggestions-todo.md`. Flujo: `game-planner` → `/add-game` → `/spec-impl`.
+- Agente `game-jam` (`.claude/agents/game-jam.md`): recibe un tema, inventa un juego original y escribe 2–3 specs en `specs/game-jam/<game-id>/` (`01-…-juego`, `02-…-integracion`, `03-…-pulido` o `03-…-<feature>`). Corre con `model: sonnet`. Autónomo, sin preguntas, solo specs en `Borrador`. Para implementar: promover a `specs/NN-slug.md` y `/spec-impl`.
 - Un spec = una rama `spec-NN-slug` = un PR a `main`. Al terminar, `Status: Implemented` en el spec.
 
 ## Architecture
