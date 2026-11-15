@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import Link from "next/link";
 import type { PointerEvent as ReactPointerEvent } from "react";
+import { useSkin } from "@/components/SkinContext";
 
 export interface PadButton {
   label: string;
@@ -52,6 +53,14 @@ function emit(type: "keydown" | "keyup", btn: PadButton, repeat = false) {
   );
 }
 
+function Arrow({ d }: { d: string }) {
+  return (
+    <svg className="vp-arrow" viewBox="0 0 24 24" aria-hidden="true">
+      <path d={d} fill="currentColor" />
+    </svg>
+  );
+}
+
 export default function GamePad({
   a,
   b,
@@ -63,6 +72,7 @@ export default function GamePad({
   onEnd,
   exitHref,
 }: GamePadProps) {
+  const { skin } = useSkin();
   const heldRef = useRef(new Map<string, Held>());
 
   const release = useCallback((code: string, force = false) => {
@@ -130,73 +140,84 @@ export default function GamePad({
   const prevent = (e: React.SyntheticEvent) => e.preventDefault();
 
   return (
-    <div className="gamepad lg:hidden" onContextMenu={prevent}>
+    <div
+      className="gamepad lg:hidden"
+      data-skin={skin}
+      onContextMenu={prevent}
+    >
       <div className="vp-main">
-        <div className="vp-dpad">
+        <div className="vp-dpad" role="group" aria-label="D-pad">
           <button
             type="button"
-            className="vp-btn vp-up"
+            className="vp-dp vp-up"
             aria-label="Arriba"
             disabled={disableUp}
             {...bind(UP)}
           >
-            {UP.label}
+            <Arrow d="M12 4 L20 16 L4 16 Z" />
           </button>
           <button
             type="button"
-            className="vp-btn vp-left"
+            className="vp-dp vp-left"
             aria-label="Izquierda"
             {...bind(LEFT)}
           >
-            {LEFT.label}
+            <Arrow d="M16 4 L16 20 L4 12 Z" />
           </button>
           <button
             type="button"
-            className="vp-btn vp-right"
+            className="vp-dp vp-right"
             aria-label="Derecha"
             {...bind(RIGHT)}
           >
-            {RIGHT.label}
+            <Arrow d="M8 4 L20 12 L8 20 Z" />
           </button>
           <button
             type="button"
-            className="vp-btn vp-down"
+            className="vp-dp vp-down"
             aria-label="Abajo"
             disabled={disableDown}
             {...bind(DOWN)}
           >
-            {DOWN.label}
+            <Arrow d="M4 8 L20 8 L12 20 Z" />
           </button>
+          <div className="vp-hub" aria-hidden="true">
+            <span className="vp-hub-gem" />
+          </div>
         </div>
         <div className="vp-actions">
           <button
             type="button"
-            className="vp-btn vp-action b"
+            className="vp-action b"
             disabled={!b}
             aria-label={b?.label ?? "B"}
             {...(b ? bind(b) : {})}
           >
-            B<small>{b?.label ?? ""}</small>
+            <span className="vp-ring" />
+            <span className="vp-letter">B</span>
+            <small>{b?.label ?? ""}</small>
           </button>
           <button
             type="button"
-            className="vp-btn vp-action a"
+            className="vp-action a"
             disabled={!a}
             aria-label={a?.label ?? "A"}
             {...(a ? bind(a) : {})}
           >
-            A<small>{a?.label ?? ""}</small>
+            <span className="vp-ring" />
+            <span className="vp-letter">A</span>
+            <small>{a?.label ?? ""}</small>
           </button>
         </div>
       </div>
       <div className="vp-foot">
-        <button type="button" className="btn yellow" onClick={onTogglePause}>
+        <button type="button" className="vp-pill pause" onClick={onTogglePause}>
           {paused ? "REANUDAR" : "PAUSA"}
         </button>
-        <button type="button" className="btn magenta" onClick={onEnd}>
+        <button type="button" className="vp-pill end" onClick={onEnd}>
           FIN
         </button>
-        <Link href={exitHref} className="btn ghost">
+        <Link href={exitHref} className="vp-pill exit">
           SALIR
         </Link>
       </div>
