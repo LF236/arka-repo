@@ -1,3 +1,8 @@
+import { resolveSkin, DEFAULT_SKIN } from "@/lib/skins";
+import type { SkinId } from "@/lib/skins";
+import { PALETTES, AVAILABLE_SKINS } from "./skins";
+import type { Palette } from "./skins";
+
 export interface GameCallbacks {
   onScore: (score: number) => void;
   onLines: (lines: number) => void;
@@ -9,23 +14,12 @@ export interface GameController {
   pause: () => void;
   resume: () => void;
   destroy: () => void;
+  setSkin: (id: SkinId) => void;
 }
 
 const COLS = 10;
 const ROWS = 20;
 const BLOCK = 30;
-
-const COLORS = [
-  null,
-  "#4dd0e1", // I
-  "#ffd54f", // O
-  "#ba68c8", // T
-  "#81c784", // S
-  "#e57373", // Z
-  "#90caf9", // J
-  "#ffb74d", // L
-  "#9e9e9e", // N
-];
 
 const PIECES = [
   null,
@@ -85,9 +79,14 @@ export function initGame(
   boardCanvas: HTMLCanvasElement,
   nextCanvas: HTMLCanvasElement,
   callbacks: GameCallbacks,
+  options?: { skin?: SkinId },
 ): GameController {
   const ctx = boardCanvas.getContext("2d")!;
   const nextCtx = nextCanvas.getContext("2d")!;
+
+  let palette: Palette = PALETTES[
+    resolveSkin(options?.skin ?? DEFAULT_SKIN, AVAILABLE_SKINS)
+  ] as Palette;
 
   const board: Board = createBoard();
   let current: Piece;
@@ -228,17 +227,22 @@ export function initGame(
     alpha?: number,
   ): void {
     if (!colorIndex) return;
-    const color = COLORS[colorIndex] as string;
+    const color = palette.pieces[colorIndex];
     context.globalAlpha = alpha ?? 1;
     context.fillStyle = color;
+    if (palette.glow && alpha === undefined) {
+      context.shadowColor = color;
+      context.shadowBlur = palette.glow;
+    }
     context.fillRect(x * size + 1, y * size + 1, size - 2, size - 2);
-    context.fillStyle = "rgba(255,255,255,0.12)";
+    context.shadowBlur = 0;
+    context.fillStyle = palette.bevel;
     context.fillRect(x * size + 1, y * size + 1, size - 2, 4);
     context.globalAlpha = 1;
   }
 
   function drawGrid(): void {
-    ctx.strokeStyle = "rgba(255,255,255,0.08)";
+    ctx.strokeStyle = palette.grid;
     ctx.lineWidth = 0.5;
     for (let c = 1; c < COLS; c++) {
       ctx.beginPath();
@@ -256,6 +260,8 @@ export function initGame(
 
   function draw(): void {
     ctx.clearRect(0, 0, boardCanvas.width, boardCanvas.height);
+    ctx.fillStyle = palette.background;
+    ctx.fillRect(0, 0, boardCanvas.width, boardCanvas.height);
     drawGrid();
     for (let r = 0; r < ROWS; r++)
       for (let c = 0; c < COLS; c++) drawBlock(ctx, c, r, board[r][c], BLOCK);
@@ -269,7 +275,7 @@ export function initGame(
             gy + r,
             current.shape[r][c],
             BLOCK,
-            0.2,
+            palette.ghostAlpha,
           );
     for (let r = 0; r < current.shape.length; r++)
       for (let c = 0; c < current.shape[r].length; c++)
@@ -285,6 +291,8 @@ export function initGame(
   function drawNext(): void {
     const NB = 30;
     nextCtx.clearRect(0, 0, nextCanvas.width, nextCanvas.height);
+    nextCtx.fillStyle = palette.background;
+    nextCtx.fillRect(0, 0, nextCanvas.width, nextCanvas.height);
     const shape = next.shape;
     const offX = Math.floor((4 - shape[0].length) / 2);
     const offY = Math.floor((4 - shape.length) / 2);
@@ -318,6 +326,12 @@ export function initGame(
   }
 
   function onKeyDown(e: KeyboardEvent): void {
+    if (
+      ["ArrowLeft", "ArrowRight", "ArrowDown", "ArrowUp", "Space"].includes(
+        e.code,
+      )
+    )
+      e.preventDefault();
     if (paused || gameOver) return;
     switch (e.code) {
       case "ArrowLeft":
@@ -334,7 +348,6 @@ export function initGame(
         tryRotate();
         break;
       case "Space":
-        e.preventDefault();
         hardDrop();
         break;
     }
@@ -374,6 +387,11 @@ export function initGame(
       cancelAnimationFrame(animId);
       document.removeEventListener("keydown", onKeyDown);
       gameOver = true;
+    },
+    setSkin(id: SkinId) {
+      palette = PALETTES[resolveSkin(id, AVAILABLE_SKINS)] as Palette;
+      drawNext();
+      if (paused || gameOver) draw();
     },
   };
 }

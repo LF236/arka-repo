@@ -4,6 +4,9 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { initGame } from "./game";
 import { insertScore } from "@/lib/supabase/leaderboard";
+import { useSkin } from "@/components/SkinContext";
+import { SKIN_LABELS } from "@/lib/skins";
+import { AVAILABLE_SKINS } from "./skins";
 import type { GameController } from "./game";
 
 interface GameProps {
@@ -20,6 +23,12 @@ export default function SnakeGame({ gameId }: GameProps) {
   const [saved, setSaved] = useState(false);
   const [gameKey, setGameKey] = useState(0);
 
+  const { skin, setSkin } = useSkin();
+  const skinRef = useRef(skin);
+  useEffect(() => {
+    skinRef.current = skin;
+  }, [skin]);
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const controllerRef = useRef<GameController | null>(null);
 
@@ -27,19 +36,27 @@ export default function SnakeGame({ gameId }: GameProps) {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const controller = initGame(canvas, {
-      onScore: (s) => setScore(s),
-      onGameOver: (finalScore) => {
-        setScore(finalScore);
-        setOver(true);
+    const controller = initGame(
+      canvas,
+      {
+        onScore: (s) => setScore(s),
+        onGameOver: (finalScore) => {
+          setScore(finalScore);
+          setOver(true);
+        },
       },
-    });
+      { skin: skinRef.current },
+    );
     controllerRef.current = controller;
 
     return () => {
       controllerRef.current?.destroy();
     };
   }, [gameKey]);
+
+  useEffect(() => {
+    controllerRef.current?.setSkin(skin);
+  }, [skin]);
 
   const togglePause = () => {
     setPaused((p) => {
@@ -104,6 +121,24 @@ export default function SnakeGame({ gameId }: GameProps) {
             SALIR
           </Link>
         </div>
+      </div>
+
+      <div className="skin-selector" role="group" aria-label="Tema visual">
+        <span className="skin-selector-label">TEMA</span>
+        {AVAILABLE_SKINS.map((id) => (
+          <button
+            key={id}
+            type="button"
+            className={`skin-selector-btn${skin === id ? " active" : ""}`}
+            aria-pressed={skin === id}
+            onClick={(e) => {
+              setSkin(id);
+              e.currentTarget.blur();
+            }}
+          >
+            {SKIN_LABELS[id]}
+          </button>
+        ))}
       </div>
 
       <div className="crt" style={{ maxWidth: 848, margin: "0 auto" }}>

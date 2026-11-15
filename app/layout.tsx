@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import "./globals.css";
 import { UserProvider } from "@/components/UserContext";
+import { SkinProvider } from "@/components/SkinContext";
 import Nav from "@/components/Nav";
 
 export const metadata: Metadata = {
@@ -24,6 +25,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <div className="av-bg" />
         <div className="av-noise" />
         <UserProvider>
+          <SkinProvider>
           <div style={{ position: "relative", zIndex: 2, display: "flex", flexDirection: "column", minHeight: "100vh" }}>
             <Suspense fallback={<nav className="av-nav" />}>
               <Nav />
@@ -33,6 +35,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               © 2026 ARCADE VAULT · HECHO CON PIXELES Y NEÓN · v2.6.0
             </footer>
           </div>
+        </SkinProvider>
         </UserProvider>
       </body>
     </html>

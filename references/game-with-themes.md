@@ -8,7 +8,7 @@ Obligatorios: `clasico` (default), `neon`, `retro`. Opcional: `pastel`.
 
 | Juego      | clasico | neon | retro | pastel | Actualizado |
 | ---------- | ------- | ---- | ----- | ------ | ----------- |
-| asteroides | ⬜      | ⬜   | ⬜    | —      | —           |
-| tetris     | ⬜      | ⬜   | ⬜    | ⬜     | —           |
-| arkanoid   | ⬜      | ⬜   | ⬜    | —      | —           |
-| snake      | ⬜      | ⬜   | ⬜    | —      | —           |
+| asteroides | ✅      | ✅   | ✅    | —      | 2026-11-15  |
+| tetris     | ✅      | ✅   | ✅    | ✅     | 2026-11-15  |
+| arkanoid   | ✅      | ✅   | ✅    | —      | 2026-11-15  |
+| snake      | ✅      | ✅   | ✅    | —      | 2026-11-15  |

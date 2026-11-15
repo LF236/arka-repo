@@ -5,6 +5,9 @@ import {
   EXPLOSION_DURATION,
   EXPLOSION_FRAMES,
 } from "./spritesheet";
+import { PALETTES, AVAILABLE_SKINS } from "./skins";
+import { resolveSkin } from "@/lib/skins";
+import type { SkinId } from "@/lib/skins";
 
 // ─── Levels ──────────────────────────────────────────────────────────────────
 
@@ -91,6 +94,7 @@ export interface GameController {
   pause: () => void;
   resume: () => void;
   destroy: () => void;
+  setSkin: (id: SkinId) => void;
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -109,8 +113,10 @@ const BASE_BALL_VY = -300;
 export function initGame(
   canvas: HTMLCanvasElement,
   callbacks: GameCallbacks,
+  options?: { skin?: SkinId },
 ): GameController {
   const ctx = canvas.getContext("2d")!;
+  let palette = PALETTES[resolveSkin(options?.skin ?? "clasico", AVAILABLE_SKINS)]!;
 
   // Audio created fresh per game instance — prevents double sounds from
   // React StrictMode double-invoking effects or multiple initGame calls.
@@ -304,38 +310,76 @@ export function initGame(
   // ── Draw ───────────────────────────────────────────────────────────────────
 
   function draw() {
-    ctx.fillStyle = "#000";
+    const p = palette;
+    ctx.fillStyle = p.background;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    for (const block of blocks) {
-      if (block.alive)
-        drawSprite(
-          ctx,
-          "block_" + block.color,
-          block.x,
-          block.y,
-          block.w,
-          block.h,
+    if (p.useSprites) {
+      for (const block of blocks) {
+        if (block.alive)
+          drawSprite(
+            ctx,
+            "block_" + block.color,
+            block.x,
+            block.y,
+            block.w,
+            block.h,
+          );
+      }
+      for (const exp of explosions) {
+        const frameIndex = Math.min(
+          Math.floor((exp.elapsed / EXPLOSION_DURATION) * 4),
+          3,
         );
+        drawFrame(
+          ctx,
+          EXPLOSION_FRAMES[exp.color][frameIndex],
+          exp.x,
+          exp.y,
+          exp.w,
+          exp.h,
+        );
+      }
+      drawSprite(ctx, "paddle", paddle.x, paddle.y, paddle.w, paddle.h);
+      drawSprite(ctx, "ball", ball.x, ball.y, ball.w, ball.h);
+      return;
     }
+
+    for (const block of blocks) {
+      if (!block.alive) continue;
+      const c = p.blocks[block.color] ?? p.paddle;
+      ctx.fillStyle = c;
+      ctx.shadowColor = c;
+      ctx.shadowBlur = p.glow;
+      ctx.fillRect(block.x + 1, block.y + 1, block.w - 2, block.h - 2);
+    }
+    ctx.shadowBlur = 0;
 
     for (const exp of explosions) {
-      const frameIndex = Math.min(
-        Math.floor((exp.elapsed / EXPLOSION_DURATION) * 4),
-        3,
-      );
-      drawFrame(
-        ctx,
-        EXPLOSION_FRAMES[exp.color][frameIndex],
-        exp.x,
-        exp.y,
-        exp.w,
-        exp.h,
+      const t = Math.min(exp.elapsed / EXPLOSION_DURATION, 1);
+      const grow = t * 6;
+      ctx.globalAlpha = 1 - t;
+      ctx.fillStyle = p.blocks[exp.color] ?? p.paddle;
+      ctx.fillRect(
+        exp.x - grow,
+        exp.y - grow,
+        exp.w + grow * 2,
+        exp.h + grow * 2,
       );
     }
+    ctx.globalAlpha = 1;
 
-    drawSprite(ctx, "paddle", paddle.x, paddle.y, paddle.w, paddle.h);
-    drawSprite(ctx, "ball", ball.x, ball.y, ball.w, ball.h);
+    ctx.fillStyle = p.paddle;
+    ctx.shadowColor = p.paddle;
+    ctx.shadowBlur = p.glow;
+    ctx.fillRect(paddle.x, paddle.y, paddle.w, paddle.h);
+    ctx.shadowBlur = 0;
+
+    ctx.fillStyle = p.ball;
+    ctx.shadowColor = p.ball;
+    ctx.shadowBlur = p.glow;
+    ctx.fillRect(ball.x, ball.y, ball.w, ball.h);
+    ctx.shadowBlur = 0;
   }
 
   // ── Loop ───────────────────────────────────────────────────────────────────
@@ -401,6 +445,10 @@ export function initGame(
     resume: () => {
       paused = false;
       lastTime = null; // reset dt so a long pause doesn't cause a physics jump
+    },
+    setSkin: (id) => {
+      palette = PALETTES[resolveSkin(id, AVAILABLE_SKINS)]!;
+      if (paused || gameState !== "playing") draw();
     },
     destroy: () => {
       destroyed = true;

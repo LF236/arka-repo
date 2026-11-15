@@ -1,3 +1,6 @@
+import { resolveSkin, DEFAULT_SKIN, type SkinId } from "@/lib/skins";
+import { PALETTES, AVAILABLE_SKINS, type Palette } from "./skins";
+
 export interface GameCallbacks {
   onScore: (score: number) => void;
   onLives: (lives: number) => void;
@@ -9,12 +12,24 @@ export interface GameController {
   pause: () => void;
   resume: () => void;
   destroy: () => void;
+  setSkin: (id: SkinId) => void;
 }
 
 const W = 800;
 const H = 600;
 
 let ctx!: CanvasRenderingContext2D;
+let palette: Palette = PALETTES[DEFAULT_SKIN]!;
+
+function glowOn(color: string) {
+  if (palette.glow > 0) {
+    ctx.shadowColor = color;
+    ctx.shadowBlur = palette.glow;
+  }
+}
+function glowOff() {
+  ctx.shadowBlur = 0;
+}
 
 const keys: Record<string, boolean> = {};
 const justPressed: Record<string, boolean> = {};
@@ -64,10 +79,12 @@ class Bullet {
   }
 
   draw() {
-    ctx.fillStyle = "#fff";
+    ctx.fillStyle = palette.bullet;
+    glowOn(palette.bullet);
     ctx.beginPath();
     ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
     ctx.fill();
+    glowOff();
   }
 }
 
@@ -128,7 +145,8 @@ class Asteroid {
     ctx.save();
     ctx.translate(this.x, this.y);
     ctx.rotate(this.rot);
-    ctx.strokeStyle = "#fff";
+    ctx.strokeStyle = palette.asteroid;
+    glowOn(palette.asteroid);
     ctx.lineWidth = 1.5;
     ctx.lineJoin = "round";
     ctx.beginPath();
@@ -137,6 +155,7 @@ class Asteroid {
       ctx.lineTo(this.verts[i][0], this.verts[i][1]);
     ctx.closePath();
     ctx.stroke();
+    glowOff();
     ctx.restore();
   }
 }
@@ -175,12 +194,14 @@ class PowerUp {
     ctx.save();
     ctx.translate(this.x, this.y);
     ctx.rotate(Math.PI / 4);
-    ctx.strokeStyle = "#0ff";
+    ctx.strokeStyle = palette.powerUp;
+    glowOn(palette.powerUp);
     ctx.lineWidth = 2;
     const r = this.radius * pulse;
     ctx.strokeRect(-r, -r, r * 2, r * 2);
+    glowOff();
     ctx.restore();
-    ctx.fillStyle = "#0ff";
+    ctx.fillStyle = palette.powerUp;
     ctx.font = "bold 12px monospace";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
@@ -263,7 +284,8 @@ class Ship {
     ctx.save();
     ctx.translate(this.x, this.y);
     ctx.rotate(this.angle);
-    ctx.strokeStyle = "#fff";
+    ctx.strokeStyle = palette.ship;
+    glowOn(palette.ship);
     ctx.lineWidth = 1.5;
     ctx.lineJoin = "round";
 
@@ -280,9 +302,14 @@ class Ship {
       ctx.moveTo(-8, -4);
       ctx.lineTo(-8 - rand(6, 14), 0);
       ctx.lineTo(-8, 4);
-      ctx.strokeStyle = "rgba(255, 130, 0, 0.85)";
+      ctx.strokeStyle = palette.thrust;
+      glowOn(palette.thrust);
+      ctx.globalAlpha = 0.85;
       ctx.stroke();
+      ctx.globalAlpha = 1;
     }
+
+    glowOff();
 
     ctx.restore();
   }
@@ -318,12 +345,14 @@ class Particle {
 
   draw() {
     const alpha = this.ttl / this.life;
-    ctx.strokeStyle = `rgba(255,255,255,${alpha.toFixed(2)})`;
+    ctx.strokeStyle = palette.particle;
+    ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(this.x, this.y);
     ctx.lineTo(this.x - this.vx * 0.05, this.y - this.vy * 0.05);
     ctx.stroke();
+    ctx.globalAlpha = 1;
   }
 }
 
@@ -481,7 +510,8 @@ function drawLifeIcon(x: number, y: number) {
   ctx.save();
   ctx.translate(x, y);
   ctx.rotate(-Math.PI / 2);
-  ctx.strokeStyle = "#fff";
+  ctx.strokeStyle = palette.lifeIcon;
+  glowOn(palette.lifeIcon);
   ctx.lineWidth = 1.2;
   ctx.lineJoin = "round";
   ctx.beginPath();
@@ -491,11 +521,12 @@ function drawLifeIcon(x: number, y: number) {
   ctx.lineTo(-6, 5);
   ctx.closePath();
   ctx.stroke();
+  glowOff();
   ctx.restore();
 }
 
 function drawHUD() {
-  ctx.fillStyle = "#fff";
+  ctx.fillStyle = palette.hudText;
   ctx.font = "15px monospace";
 
   ctx.textAlign = "left";
@@ -508,23 +539,23 @@ function drawHUD() {
 
   if (ship.tripleShot > 0) {
     ctx.textAlign = "left";
-    ctx.fillStyle = "#0ff";
+    ctx.fillStyle = palette.powerUpHud;
     ctx.fillText(`3x  ${ship.tripleShot.toFixed(1)}s`, 14, 46);
   }
 }
 
 function drawOverlay(title: string, sub: string) {
   ctx.textAlign = "center";
-  ctx.fillStyle = "#fff";
+  ctx.fillStyle = palette.overlayTitle;
   ctx.font = "bold 46px monospace";
   ctx.fillText(title, W / 2, H / 2 - 18);
   ctx.font = "18px monospace";
-  ctx.fillStyle = "rgba(255,255,255,0.65)";
+  ctx.fillStyle = palette.overlaySub;
   ctx.fillText(sub, W / 2, H / 2 + 22);
 }
 
 function draw() {
-  ctx.fillStyle = "#000";
+  ctx.fillStyle = palette.background;
   ctx.fillRect(0, 0, W, H);
 
   particles.forEach((p) => p.draw());
@@ -553,8 +584,11 @@ function loop(ts: number) {
 export function initGame(
   canvas: HTMLCanvasElement,
   callbacks: GameCallbacks,
+  options?: { skin?: SkinId },
 ): GameController {
   ctx = canvas.getContext("2d")!;
+  palette =
+    PALETTES[resolveSkin(options?.skin ?? DEFAULT_SKIN, AVAILABLE_SKINS)]!;
   activeCallbacks = callbacks;
   paused = false;
   lastTime = null;
@@ -588,6 +622,10 @@ export function initGame(
     },
     resume() {
       paused = false;
+    },
+    setSkin(id: SkinId) {
+      palette = PALETTES[resolveSkin(id, AVAILABLE_SKINS)]!;
+      if (paused || state === "gameover") draw();
     },
     destroy() {
       cancelAnimationFrame(rafHandle);
