@@ -3651,6 +3651,11 @@ a {
 .gamepad {
   display: none;
 }
+@media (max-width: 1023px) and (pointer: coarse) {
+  .gamepad {
+    display: flex;
+  }
+}
 @media (max-width: 1023px) {
   .av-player {
     display: flex;
@@ -3729,7 +3734,6 @@ a {
     height: 72px;
   }
   .gamepad {
-    display: flex;
     flex-direction: column;
     gap: 14px;
     margin-top: 28px;
