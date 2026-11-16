@@ -15,9 +15,13 @@ interface GameProps {
 }
 
 export default function FroggerGame({ gameId }: GameProps) {
-  const [score, setScore] = useState(0);
-  const [lives, setLives] = useState(3);
-  const [level, setLevel] = useState(1);
+  const scoreRef = useRef(0);
+  const livesRef = useRef(3);
+  const levelRef = useRef(1);
+  const scoreEl = useRef<HTMLDivElement>(null);
+  const livesEl = useRef<HTMLDivElement>(null);
+  const levelEl = useRef<HTMLDivElement>(null);
+  const [finalScore, setFinalScore] = useState(0);
   const [paused, setPaused] = useState(false);
   const [over, setOver] = useState(false);
   const [name, setName] = useState(
@@ -42,11 +46,24 @@ export default function FroggerGame({ gameId }: GameProps) {
     const controller = initGame(
       canvas,
       {
-        onScore: (s) => setScore(s),
-        onLives: (l) => setLives(l),
-        onLevel: (l) => setLevel(l),
-        onGameOver: (finalScore) => {
-          setScore(finalScore);
+        onScore: (s) => {
+          scoreRef.current = s;
+          if (scoreEl.current)
+            scoreEl.current.textContent = s.toLocaleString("es-ES");
+        },
+        onLives: (l) => {
+          livesRef.current = l;
+          if (livesEl.current) livesEl.current.textContent = String(l);
+        },
+        onLevel: (l) => {
+          levelRef.current = l;
+          if (levelEl.current) levelEl.current.textContent = String(l);
+        },
+        onGameOver: (final) => {
+          scoreRef.current = final;
+          if (scoreEl.current)
+            scoreEl.current.textContent = final.toLocaleString("es-ES");
+          setFinalScore(final);
           setOver(true);
         },
       },
@@ -76,14 +93,15 @@ export default function FroggerGame({ gameId }: GameProps) {
 
   const handleEnd = () => {
     controllerRef.current?.pause();
+    setFinalScore(scoreRef.current);
     setOver(true);
   };
 
   const saveScore = () => {
-    void insertScore("frogger", name, score);
+    void insertScore("frogger", name, finalScore);
     try {
       const all = JSON.parse(localStorage.getItem("av_scores_frogger") || "[]");
-      all.push({ score, name, at: Date.now() });
+      all.push({ score: finalScore, name, at: Date.now() });
       localStorage.setItem("av_scores_frogger", JSON.stringify(all));
       localStorage.setItem("av_player_name", name);
     } catch {}
@@ -92,9 +110,13 @@ export default function FroggerGame({ gameId }: GameProps) {
 
   const restart = () => {
     controllerRef.current?.destroy();
-    setScore(0);
-    setLives(3);
-    setLevel(1);
+    scoreRef.current = 0;
+    livesRef.current = 3;
+    levelRef.current = 1;
+    if (scoreEl.current) scoreEl.current.textContent = "0";
+    if (livesEl.current) livesEl.current.textContent = "3";
+    if (levelEl.current) levelEl.current.textContent = "1";
+    setFinalScore(0);
     setPaused(false);
     setOver(false);
     setSaved(false);
@@ -114,15 +136,21 @@ export default function FroggerGame({ gameId }: GameProps) {
           </div>
           <div className="hud-stat">
             <div className="l">Puntuación</div>
-            <div className="v">{score.toLocaleString("es-ES")}</div>
+            <div className="v" ref={scoreEl}>
+              0
+            </div>
           </div>
           <div className="hud-stat">
             <div className="l">Vidas</div>
-            <div className="v">{lives}</div>
+            <div className="v" ref={livesEl}>
+              3
+            </div>
           </div>
           <div className="hud-stat">
             <div className="l">Nivel</div>
-            <div className="v">{level}</div>
+            <div className="v" ref={levelEl}>
+              1
+            </div>
           </div>
         </div>
         <div className="hud-actions max-lg:hidden">
@@ -210,7 +238,7 @@ export default function FroggerGame({ gameId }: GameProps) {
           <div className="modal">
             <h2>FIN DEL JUEGO</h2>
             <div className="final-label">PUNTUACIÓN FINAL</div>
-            <div className="final">{score.toLocaleString("es-ES")}</div>
+            <div className="final">{finalScore.toLocaleString("es-ES")}</div>
             {!saved ? (
               <div className="input-row">
                 <input

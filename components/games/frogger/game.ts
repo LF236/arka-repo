@@ -39,6 +39,8 @@ const MAX_SPEED_MULT = 2.5;
 const TURTLE_VISIBLE_MS = 3000;
 const TURTLE_SUBMERGED_MS = 1500;
 const TURTLE_CYCLE_MS = TURTLE_VISIBLE_MS + TURTLE_SUBMERGED_MS;
+const DASH_ROAD: number[] = [16, 14];
+const DASH_CLEAR: number[] = [];
 
 interface Entity {
   x: number;
@@ -143,6 +145,12 @@ function buildLanes(level: number): Lane[] {
   });
 }
 
+function indexLanes(lanes: Lane[]): Map<number, Lane> {
+  const m = new Map<number, Lane>();
+  for (const l of lanes) m.set(l.row, l);
+  return m;
+}
+
 function updateLanes(lanes: Lane[], dt: number) {
   for (const lane of lanes) {
     const dx = (lane.speed * lane.dir * dt) / 1000;
@@ -187,21 +195,21 @@ function drawZones(ctx: CanvasRenderingContext2D) {
   );
   ctx.strokeStyle = COLORS.roadLine;
   ctx.lineWidth = 2;
-  ctx.setLineDash([16, 14]);
+  ctx.setLineDash(DASH_ROAD);
   for (let r = ROW_ROAD_TOP + 1; r <= ROW_ROAD_BOT; r++) {
     ctx.beginPath();
     ctx.moveTo(0, r * CELL);
     ctx.lineTo(CANVAS_W, r * CELL);
     ctx.stroke();
   }
-  ctx.setLineDash([]);
+  ctx.setLineDash(DASH_CLEAR);
   // Zona de inicio
   ctx.fillStyle = COLORS.start;
   ctx.fillRect(0, ROW_START * CELL, CANVAS_W, CELL);
 }
 
-function glowColor(e: Entity, idx: number): string {
-  switch (e.type) {
+function glowColor(type: Entity["type"], idx: number): string {
+  switch (type) {
     case "car":
       return COLORS.cars[idx % COLORS.cars.length];
     case "truck":
@@ -219,12 +227,30 @@ function drawEntity(
   row: number,
   idx: number,
 ) {
-  const x = e.x * CELL;
-  const y = row * CELL;
-  const w = e.width * CELL;
-  ctx.shadowColor = glowColor(e, idx);
+  drawEntityAt(
+    ctx,
+    e.type,
+    e.width,
+    !!e.submerged,
+    e.x * CELL,
+    row * CELL,
+    idx,
+  );
+}
+
+function drawEntityAt(
+  ctx: CanvasRenderingContext2D,
+  type: Entity["type"],
+  width: number,
+  submerged: boolean,
+  x: number,
+  y: number,
+  idx: number,
+) {
+  const w = width * CELL;
+  ctx.shadowColor = glowColor(type, idx);
   ctx.shadowBlur = COLORS.glow;
-  switch (e.type) {
+  switch (type) {
     case "car": {
       ctx.fillStyle = COLORS.cars[idx % COLORS.cars.length];
       ctx.fillRect(x + 3, y + 8, w - 6, CELL - 16);
@@ -243,14 +269,14 @@ function drawEntity(
       ctx.fillStyle = COLORS.log;
       ctx.fillRect(x + 1, y + 6, w - 2, CELL - 12);
       ctx.fillStyle = COLORS.logDark;
-      for (let i = 1; i < e.width * 2; i++) {
+      for (let i = 1; i < width * 2; i++) {
         ctx.fillRect(x + (i * CELL) / 2, y + 6, 2, CELL - 12);
       }
       break;
     }
     case "turtle": {
-      ctx.globalAlpha = e.submerged ? 0.3 : 1;
-      for (let i = 0; i < e.width; i++) {
+      ctx.globalAlpha = submerged ? 0.3 : 1;
+      for (let i = 0; i < width; i++) {
         const cx = x + i * CELL + CELL / 2;
         const cy = y + CELL / 2;
         ctx.fillStyle = COLORS.turtleShell;
@@ -267,6 +293,39 @@ function drawEntity(
     }
   }
   ctx.shadowBlur = 0;
+}
+
+/** Margen del sprite para que el blur (glow) no se recorte. */
+const SPRITE_PAD = 32;
+
+type SpriteCache = Map<string, HTMLCanvasElement>;
+
+function spriteKey(type: Entity["type"], width: number, idx: number): string {
+  return type === "car" ? `car:${width}:${idx}` : `${type}:${width}`;
+}
+
+/** Pre-renderiza cada variante de entidad con el glow horneado. null si el skin no tiene glow. */
+function buildSpriteCache(): SpriteCache | null {
+  if (COLORS.glow <= 0) return null;
+  const cache: SpriteCache = new Map();
+  const make = (type: Entity["type"], width: number, idx: number) => {
+    const key = spriteKey(type, width, idx);
+    if (cache.has(key)) return;
+    const c = document.createElement("canvas");
+    c.width = width * CELL + 2 * SPRITE_PAD;
+    c.height = CELL + 2 * SPRITE_PAD;
+    const sctx = c.getContext("2d") as CanvasRenderingContext2D;
+    drawEntityAt(sctx, type, width, false, SPRITE_PAD, SPRITE_PAD, idx);
+    cache.set(key, c);
+  };
+  for (const cfg of LANE_CONFIGS) {
+    if (cfg.type === "car") {
+      for (let i = 0; i < COLORS.cars.length; i++) make("car", cfg.width, i);
+    } else {
+      make(cfg.type, cfg.width, 0);
+    }
+  }
+  return cache;
 }
 
 function createFrog(): Frog {
@@ -318,10 +377,13 @@ function effectiveRow(frog: Frog): number {
   return frog.animT / JUMP_MS < 0.5 ? frog.fromRow : frog.targetRow;
 }
 
-function checkRoadCollision(frog: Frog, lanes: Lane[]): boolean {
+function checkRoadCollision(
+  frog: Frog,
+  laneByRow: Map<number, Lane>,
+): boolean {
   const row = effectiveRow(frog);
   if (row < ROW_ROAD_TOP || row > ROW_ROAD_BOT) return false;
-  const lane = lanes.find((l) => l.row === row);
+  const lane = laneByRow.get(row);
   if (!lane) return false;
   const left = frog.x + 0.15;
   const right = frog.x + 0.85;
@@ -346,7 +408,16 @@ function drawFrog(ctx: CanvasRenderingContext2D, frog: Frog) {
     row = frog.fromRow + (frog.targetRow - frog.fromRow) * t;
     lift = Math.sin(t * Math.PI) * 4;
   }
-  const cx = frog.x * CELL + CELL / 2;
+  drawFrogAt(ctx, frog.x, row, lift);
+}
+
+function drawFrogAt(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  row: number,
+  lift = 0,
+) {
+  const cx = x * CELL + CELL / 2;
   const cy = row * CELL + CELL / 2 - lift;
   ctx.shadowColor = COLORS.frog;
   ctx.shadowBlur = COLORS.glow;
@@ -410,6 +481,8 @@ export function initGame(
   let score = 0;
   let lives = 3;
   let lanes = buildLanes(level);
+  let laneByRow = indexLanes(lanes);
+  let sprites = buildSpriteCache();
   let timeMax = roundTimeMs(level);
   let timeLeft = timeMax;
   let bestRow = ROW_START;
@@ -461,6 +534,7 @@ export function initGame(
     callbacks.onLevel(level);
     filled.fill(false);
     lanes = buildLanes(level);
+    laneByRow = indexLanes(lanes);
     timeMax = roundTimeMs(level);
     respawn();
   }
@@ -492,7 +566,7 @@ export function initGame(
     }
     if (checkGoal()) return;
 
-    if (checkRoadCollision(frog, lanes)) {
+    if (checkRoadCollision(frog, laneByRow)) {
       killFrog();
       return;
     }
@@ -503,7 +577,7 @@ export function initGame(
       frog.row >= ROW_RIVER_TOP &&
       frog.row <= ROW_RIVER_BOT
     ) {
-      const lane = lanes.find((l) => l.row === frog.row);
+      const lane = laneByRow.get(frog.row);
       const support = lane ? getSupport(frog, lane) : null;
       if (!lane || !support) {
         killFrog();
@@ -533,17 +607,28 @@ export function initGame(
     ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
     drawZones(ctx);
     for (const lane of lanes) {
-      lane.entities.forEach((e, i) => drawEntity(ctx, e, lane.row, i));
-    }
-    filled.forEach((f, i) => {
-      if (f) {
-        drawFrog(ctx, {
-          ...createFrog(),
-          x: GOAL_COLS[i] + 0.5,
-          row: ROW_GOALS,
-        });
+      const ents = lane.entities;
+      for (let i = 0; i < ents.length; i++) {
+        const e = ents[i];
+        const sprite = sprites?.get(
+          spriteKey(e.type, e.width, i % COLORS.cars.length),
+        );
+        if (sprite) {
+          if (e.submerged) ctx.globalAlpha = 0.3;
+          ctx.drawImage(
+            sprite,
+            e.x * CELL - SPRITE_PAD,
+            lane.row * CELL - SPRITE_PAD,
+          );
+          if (e.submerged) ctx.globalAlpha = 1;
+        } else {
+          drawEntity(ctx, e, lane.row, i);
+        }
       }
-    });
+    }
+    for (let i = 0; i < filled.length; i++) {
+      if (filled[i]) drawFrogAt(ctx, GOAL_COLS[i] + 0.5, ROW_GOALS);
+    }
     drawFrog(ctx, frog);
     drawHud(ctx, score, level, Math.max(0, lives), timeLeft / timeMax);
   }
@@ -551,7 +636,11 @@ export function initGame(
   function frame(now: number) {
     const dt = Math.min(MAX_DT, now - lastTime);
     lastTime = now;
-    if (!paused) update(dt);
+    if (paused) {
+      rafId = requestAnimationFrame(frame);
+      return;
+    }
+    update(dt);
     draw();
     rafId = requestAnimationFrame(frame);
   }
@@ -564,6 +653,7 @@ export function initGame(
   return {
     setSkin: (id) => {
       COLORS = PALETTES[resolveSkin(id, AVAILABLE_SKINS)] as Palette;
+      sprites = buildSpriteCache();
       draw();
     },
     pause: () => {
@@ -575,6 +665,7 @@ export function initGame(
     },
     destroy: () => {
       cancelAnimationFrame(rafId);
+      sprites = null;
       document.removeEventListener("keydown", onKeyDown);
     },
   };
