@@ -24,21 +24,31 @@ Hook `PostToolUse` (`.claude/settings.json`) corre `prettier --write` y `eslint 
 
 Todo cambio funcional pasa por un spec en `specs/NN-slug.md` (estructura en `.claude/skills/spec/template.md`).
 
-| Skill        | Uso                                                                                              |
-| ------------ | ------------------------------------------------------------------------------------------------ |
-| `/spec`      | Diseña un spec nuevo. No escribe código.                                                         |
-| `/spec-impl` | Implementa un spec aprobado. Crea la rama `spec-NN-slug` (auto, ver `specs/.spec-config.yml`).   |
-| `/add-game`  | Genera el spec combinado juego + leaderboard para un juego nuevo. Solo spec; luego `/spec-impl`. |
+### Skills (`.claude/skills/<nombre>/SKILL.md`)
+
+| Skill             | Uso                                                                                               |
+| ----------------- | ------------------------------------------------------------------------------------------------- |
+| `/spec`           | Diseña un spec nuevo. No escribe código.                                                          |
+| `/spec-impl`      | Implementa un spec aprobado. Crea la rama `spec-NN-slug` (auto, ver `specs/.spec-config.yml`).    |
+| `/add-game`       | Genera el spec combinado juego + leaderboard. Solo spec; luego `/spec-impl`.                      |
+| `/spec-impl-game` | `/spec-impl` + al terminar lanza `skin-designer` → `mobile-porter`. Flujo: `/add-game` → este.    |
 
 - `/spec` y `/spec-impl` vienen de `Klerith/fernando-skills` (fuente en `.agents/skills/`, symlinks en `.claude/skills/`, versiones en `skills-lock.json`). No editarlos a mano.
-- `/add-game` es local del proyecto (`.claude/skills/add-game/SKILL.md`).
-- `/spec-impl-game <NN-spec>` (local, `.claude/skills/spec-impl-game/SKILL.md`): corre `/spec-impl` (lee su SKILL fuente) y al terminar lanza en secuencia `skin-designer` → `mobile-porter` con el slug del juego. Flujo juego nuevo: `/add-game` → `/spec-impl-game`.
-- Agente `game-planner` (`.claude/agents/game-planner.md`, memoria en `.claude/agent-memory/game-planner/`): sugiere el próximo juego y lo anota en `references/games-suggestions-todo.md`. Flujo: `game-planner` → `/add-game` → `/spec-impl`.
-- Agente `game-jam` (`.claude/agents/game-jam.md`): recibe un tema, inventa un juego original y escribe 2–3 specs en `specs/game-jam/<game-id>/` (`01-…-juego`, `02-…-integracion`, `03-…-pulido` o `03-…-<feature>`). Corre con `model: sonnet`. Autónomo, sin preguntas, solo specs en `Borrador`. Para implementar: promover a `specs/NN-slug.md` y `/spec-impl`.
-- Agente `skin-designer` (`.claude/agents/skin-designer.md`): recibe el slug de **un** juego e implementa directamente sus skins (`clasico` default, `neon`, `retro`; `pastel` opcional), legibles en oscuro. Corre con `model: sonnet`. Sin spec, sin commits, sin preguntas; solo el juego pedido. Registro en `references/game-with-themes.md`. Crea la infra compartida (`lib/skins.ts`, `components/SkinContext.tsx`, selector en `Nav`) la primera vez.
-- Agente `mobile-porter` (`.claude/agents/mobile-porter.md`): recibe el slug de **un juego nuevo** y lo porta a móvil (`<GamePad>`, layout bajo `lg`) siguiendo SPEC 11. Corre con `model: sonnet`. Sin spec, sin commits, sin preguntas; no toca los 4 juegos ya portados ni `game.ts`. Flujo: `/add-game` → `/spec-impl` → `mobile-porter`.
-- Agente `game-performance-booster` (`.claude/agents/game-performance-booster.md`): recibe el slug de **un** juego, lo audita contra los problemas de SPEC 13 (draw en pausa, `shadowBlur` en skins con glow, allocaciones por frame, HUD en `useState`, audio por colisión con `cloneNode().play()` → Web Audio, fugas) y arregla los que existan en `components/games/<slug>/`. Corre con `model: sonnet`. Sin spec, sin commits, sin preguntas, sin memoria persistente.
-- Un spec = una rama `spec-NN-slug` = un PR a `main`. Al terminar, `Status: Implemented` en el spec.
+- `/add-game` y `/spec-impl-game` son locales.
+
+### Agentes (`.claude/agents/<nombre>.md` — ahí está la definición completa)
+
+Todos sin preguntas ni commits; los de `model: sonnet` corren en Sonnet.
+
+- `game-planner` — sugiere/prioriza el próximo juego; anota en `references/games-suggestions-todo.md`. Memoria en `.claude/agent-memory/game-planner/`.
+- `game-jam` — dado un tema, inventa un juego y escribe 2–3 specs `Borrador` en `specs/game-jam/<game-id>/`. Solo specs.
+- `skin-designer` — implementa skins (clásico/neon/retro) en un juego; actualiza `references/game-with-themes.md`.
+- `mobile-porter` — porta a móvil un juego nuevo (`<GamePad>`, SPEC 11).
+- `game-performance-booster` — audita y arregla rendimiento de un juego (SPEC 13).
+
+Flujos: `game-planner` → `/add-game` → `/spec-impl-game`; `game-jam` → promover spec a `specs/NN-slug.md` → `/spec-impl`.
+
+Un spec = una rama `spec-NN-slug` = un PR a `main`. Al terminar, `Status: Implemented` en el spec.
 
 ## Architecture
 
@@ -56,7 +66,7 @@ Next.js 16 App Router con React 19 y TypeScript strict.
 | `/biblioteca`         | Catálogo de juegos                                                     |
 | `/juego/[id]`         | Ficha del juego + leaderboard lateral                                  |
 | `/juego/[id]/jugar`   | Reproductor: juego canvas si está en `CANVAS_GAMES`, si no player mock |
-| `/juego/<slug>/jugar` | Rutas estáticas por juego (arkanoid, frogger, snake, tetris)           |
+| `/juego/<slug>/jugar` | Rutas estáticas por juego (arkanoid, frogger, snake, tetris; asteroides usa la dinámica)           |
 | `/salon`              | Salón de la fama (leaderboard global + tab por juego)                  |
 | `/acerca`             | About + formulario de contacto                                         |
 | `/auth`               | Login mock                                                             |
@@ -65,6 +75,8 @@ Next.js 16 App Router con React 19 y TypeScript strict.
 ### Datos
 
 - `lib/data.ts` — tipos (`Game`, `ScoreRow`, `User`), array `GAMES` (catálogo local / fallback), `CATS`, scores mock.
+- `lib/skins.ts` + `components/SkinContext.tsx` — skin global (selector en `Nav`).
+- `components/GamePad.tsx` — gamepad virtual táctil (móvil, bajo `lg`).
 - `lib/supabase/client.ts` / `server.ts` — clientes `@supabase/ssr`.
 - `lib/supabase/leaderboard.ts` — única capa de acceso: `fetchCatalog`, `fetchRealGames`, `fetchTopScores`, `insertScore`. Todas capturan errores y degradan (catálogo → `GAMES`, scores → `[]`); no lanzan.
 - `components/UserContext.tsx` — auth mock en `localStorage` (`av_user`). No hay Supabase Auth; `scores.user_id` siempre `null`.
@@ -81,6 +93,7 @@ Next.js 16 App Router con React 19 y TypeScript strict.
 Patrón fijo; `asteroides` es la implementación canónica:
 
 - `game.ts` — lógica vanilla sin React. Exporta `initGame(canvas, callbacks): GameController` con `{ pause, resume, destroy }`. Callbacks base `onScore` / `onGameOver`; opcionales según juego (`onLives`, `onLevel`, `onLines`).
+- `skins.ts` — paletas/render por skin (`clasico`, `neon`, `retro`).
 - `index.tsx` — componente cliente `({ gameId })`: refs de canvas y controller, HUD, modal de game over, `insertScore` + cache en `localStorage`.
 - Se carga siempre con `dynamic(..., { ssr: false })` (usa `localStorage` en el estado inicial).
 - Assets en `public/` (`public/games/arkanoid/`, `public/snake/`).
