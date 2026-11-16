@@ -12,3 +12,4 @@ Obligatorios: `clasico` (default), `neon`, `retro`. Opcional: `pastel`.
 | tetris     | ✅      | ✅   | ✅    | ✅     | 2026-11-15  |
 | arkanoid   | ✅      | ✅   | ✅    | —      | 2026-11-15  |
 | snake      | ✅      | ✅   | ✅    | —      | 2026-11-15  |
+| frogger    | ✅      | ✅   | ✅    | —      | 2026-11-15  |
