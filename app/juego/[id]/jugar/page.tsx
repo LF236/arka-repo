@@ -20,6 +20,10 @@ const CANVAS_GAMES: Record<string, ComponentType<{ gameId: string }>> = {
   snake: dynamic<{ gameId: string }>(() => import("@/components/games/snake"), {
     ssr: false,
   }),
+  frogger: dynamic<{ gameId: string }>(
+    () => import("@/components/games/frogger"),
+    { ssr: false },
+  ),
 };
 
 function GamePlayerContent({ id }: { id: string }) {
