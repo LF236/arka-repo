@@ -31,6 +31,42 @@ function glowOff() {
   ctx.shadowBlur = 0;
 }
 
+const SPRITE_PAD = 28; // >= 2 * glow (12) + stroke
+let spriteGen = 0;
+let bulletSprite: HTMLCanvasElement | null = null;
+let lifeSprite: HTMLCanvasElement | null = null;
+
+function invalidateSprites() {
+  spriteGen++;
+  bulletSprite = null;
+  lifeSprite = null;
+}
+
+// Renders with the same draw function onto an offscreen ctx centered at (half, half).
+function makeSprite(
+  half: number,
+  fn: (cx: number, cy: number) => void,
+): HTMLCanvasElement {
+  const c = document.createElement("canvas");
+  c.width = c.height = Math.ceil(half * 2);
+  const main = ctx;
+  ctx = c.getContext("2d")!;
+  fn(half, half);
+  ctx = main;
+  return c;
+}
+
+function compact<T extends { dead: boolean }>(arr: T[]): T[] {
+  let j = 0;
+  for (let i = 0; i < arr.length; i++) {
+    if (!arr[i].dead) arr[j++] = arr[i];
+  }
+  arr.length = j;
+  return arr;
+}
+
+const PREVENT_KEYS = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space"];
+
 const keys: Record<string, boolean> = {};
 const justPressed: Record<string, boolean> = {};
 
@@ -79,13 +115,25 @@ class Bullet {
   }
 
   draw() {
-    ctx.fillStyle = palette.bullet;
-    glowOn(palette.bullet);
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-    ctx.fill();
-    glowOff();
+    if (palette.glow > 0) {
+      bulletSprite ??= makeSprite(this.radius + SPRITE_PAD, (cx, cy) =>
+        drawBulletAt(cx, cy, this.radius),
+      );
+      const h = bulletSprite.width / 2;
+      ctx.drawImage(bulletSprite, this.x - h, this.y - h);
+      return;
+    }
+    drawBulletAt(this.x, this.y, this.radius);
   }
+}
+
+function drawBulletAt(x: number, y: number, radius: number) {
+  ctx.fillStyle = palette.bullet;
+  glowOn(palette.bullet);
+  ctx.beginPath();
+  ctx.arc(x, y, radius, 0, Math.PI * 2);
+  ctx.fill();
+  glowOff();
 }
 
 const RADII = [0, 16, 30, 50];
@@ -141,10 +189,33 @@ class Asteroid {
     ];
   }
 
+  sprite: HTMLCanvasElement | null = null;
+  spriteGen = -1;
+
   draw() {
+    if (palette.glow > 0) {
+      if (!this.sprite || this.spriteGen !== spriteGen) {
+        this.sprite = makeSprite(this.radius + SPRITE_PAD, (cx, cy) =>
+          this.drawShape(cx, cy, 0),
+        );
+        this.spriteGen = spriteGen;
+      }
+      const h = this.sprite.width / 2;
+      ctx.save();
+      ctx.translate(this.x, this.y);
+      ctx.rotate(this.rot);
+      ctx.drawImage(this.sprite, -h, -h);
+      ctx.restore();
+      return;
+    }
+    this.sprite = null;
+    this.drawShape(this.x, this.y, this.rot);
+  }
+
+  drawShape(x: number, y: number, rot: number) {
     ctx.save();
-    ctx.translate(this.x, this.y);
-    ctx.rotate(this.rot);
+    ctx.translate(x, y);
+    ctx.rotate(rot);
     ctx.strokeStyle = palette.asteroid;
     glowOn(palette.asteroid);
     ctx.lineWidth = 1.5;
@@ -434,16 +505,16 @@ function killShip() {
 
 function update(dt: number) {
   if (state === "gameover") {
-    particles.forEach((p) => p.update(dt));
-    particles = particles.filter((p) => !p.dead);
+    for (let i = 0; i < particles.length; i++) particles[i].update(dt);
+    compact(particles);
     return;
   }
 
   if (state === "dead") {
     deadTimer -= dt;
-    particles.forEach((p) => p.update(dt));
-    particles = particles.filter((p) => !p.dead);
-    asteroids.forEach((a) => a.update(dt));
+    for (let i = 0; i < particles.length; i++) particles[i].update(dt);
+    compact(particles);
+    for (let i = 0; i < asteroids.length; i++) asteroids[i].update(dt);
     if (deadTimer <= 0) {
       state = "playing";
       ship.reset();
@@ -454,14 +525,14 @@ function update(dt: number) {
   if (pressed("Space")) bullets.push(...ship.tryShoot());
 
   ship.update(dt);
-  bullets.forEach((b) => b.update(dt));
-  asteroids.forEach((a) => a.update(dt));
-  particles.forEach((p) => p.update(dt));
-  powerUps.forEach((p) => p.update(dt));
+  for (let i = 0; i < bullets.length; i++) bullets[i].update(dt);
+  for (let i = 0; i < asteroids.length; i++) asteroids[i].update(dt);
+  for (let i = 0; i < particles.length; i++) particles[i].update(dt);
+  for (let i = 0; i < powerUps.length; i++) powerUps[i].update(dt);
 
-  bullets = bullets.filter((b) => !b.dead);
-  particles = particles.filter((p) => !p.dead);
-  powerUps = powerUps.filter((p) => !p.dead);
+  compact(bullets);
+  compact(particles);
+  compact(powerUps);
 
   for (const p of powerUps) {
     if (!p.dead && dist(ship, p) < ship.radius + p.radius) {
@@ -491,8 +562,10 @@ function update(dt: number) {
       }
     }
   }
-  asteroids = asteroids.filter((a) => !a.dead).concat(newAsteroids);
-  bullets = bullets.filter((b) => !b.dead);
+  compact(asteroids);
+  for (let i = 0; i < newAsteroids.length; i++)
+    asteroids.push(newAsteroids[i]);
+  compact(bullets);
 
   if (ship.invincible <= 0) {
     for (const a of asteroids) {
@@ -507,6 +580,18 @@ function update(dt: number) {
 }
 
 function drawLifeIcon(x: number, y: number) {
+  if (palette.glow > 0) {
+    lifeSprite ??= makeSprite(10 + SPRITE_PAD, (cx, cy) =>
+      drawLifeIconShape(cx, cy),
+    );
+    const h = lifeSprite.width / 2;
+    ctx.drawImage(lifeSprite, x - h, y - h);
+    return;
+  }
+  drawLifeIconShape(x, y);
+}
+
+function drawLifeIconShape(x: number, y: number) {
   ctx.save();
   ctx.translate(x, y);
   ctx.rotate(-Math.PI / 2);
@@ -558,10 +643,10 @@ function draw() {
   ctx.fillStyle = palette.background;
   ctx.fillRect(0, 0, W, H);
 
-  particles.forEach((p) => p.draw());
-  asteroids.forEach((a) => a.draw());
-  powerUps.forEach((p) => p.draw());
-  bullets.forEach((b) => b.draw());
+  for (let i = 0; i < particles.length; i++) particles[i].draw();
+  for (let i = 0; i < asteroids.length; i++) asteroids[i].draw();
+  for (let i = 0; i < powerUps.length; i++) powerUps[i].draw();
+  for (let i = 0; i < bullets.length; i++) bullets[i].draw();
   ship.draw();
 
   drawHUD();
@@ -592,17 +677,13 @@ export function initGame(
   activeCallbacks = callbacks;
   paused = false;
   lastTime = null;
+  invalidateSprites();
 
   for (const k of Object.keys(keys)) delete keys[k];
   for (const k of Object.keys(justPressed)) delete justPressed[k];
 
   const onKeyDown = (e: KeyboardEvent) => {
-    if (
-      ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space"].includes(
-        e.code,
-      )
-    )
-      e.preventDefault();
+    if (PREVENT_KEYS.includes(e.code)) e.preventDefault();
     if (!keys[e.code]) justPressed[e.code] = true;
     keys[e.code] = true;
   };
@@ -622,13 +703,16 @@ export function initGame(
     },
     resume() {
       paused = false;
+      lastTime = null;
     },
     setSkin(id: SkinId) {
       palette = PALETTES[resolveSkin(id, AVAILABLE_SKINS)]!;
+      invalidateSprites();
       if (paused || state === "gameover") draw();
     },
     destroy() {
       cancelAnimationFrame(rafHandle);
+      invalidateSprites();
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
     },
