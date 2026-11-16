@@ -12,10 +12,14 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="es">
+    <html lang="es" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
         <link
           href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Courier+Prime:ital,wght@0,400;0,700;1,400;1,700&display=swap"
           rel="stylesheet"
@@ -26,16 +30,34 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <div className="av-noise" />
         <UserProvider>
           <SkinProvider>
-          <div style={{ position: "relative", zIndex: 2, display: "flex", flexDirection: "column", minHeight: "100vh" }}>
-            <Suspense fallback={<nav className="av-nav" />}>
-              <Nav />
-            </Suspense>
-            <main className="av-main">{children}</main>
-            <footer style={{ borderTop: "1px solid var(--line)", padding: "20px 32px", textAlign: "center", color: "var(--ink-faint)", fontFamily: "var(--mono)", fontSize: 11, letterSpacing: "0.16em" }}>
-              © 2026 ARCADE VAULT · HECHO CON PIXELES Y NEÓN · v2.6.0
-            </footer>
-          </div>
-        </SkinProvider>
+            <div
+              style={{
+                position: "relative",
+                zIndex: 2,
+                display: "flex",
+                flexDirection: "column",
+                minHeight: "100vh",
+              }}
+            >
+              <Suspense fallback={<nav className="av-nav" />}>
+                <Nav />
+              </Suspense>
+              <main className="av-main">{children}</main>
+              <footer
+                style={{
+                  borderTop: "1px solid var(--line)",
+                  padding: "20px 32px",
+                  textAlign: "center",
+                  color: "var(--ink-faint)",
+                  fontFamily: "var(--mono)",
+                  fontSize: 11,
+                  letterSpacing: "0.16em",
+                }}
+              >
+                © 2026 ARCADE VAULT · HECHO CON PIXELES Y NEÓN · v2.6.0
+              </footer>
+            </div>
+          </SkinProvider>
         </UserProvider>
       </body>
     </html>
