@@ -118,6 +118,32 @@ function drawGameOver(
   ctx.textAlign = "left";
 }
 
+const SPRITE_PAD = 30;
+
+function drawBodyCell(
+  ctx: CanvasRenderingContext2D,
+  px: number,
+  py: number,
+  pal: Palette,
+) {
+  ctx.fillStyle = pal.snakeBody;
+  ctx.shadowColor = pal.snakeBody;
+  ctx.shadowBlur = pal.glow;
+  ctx.fillRect(px + 1, py + 1, CELL - 2, CELL - 2);
+  ctx.shadowBlur = 0;
+}
+
+function buildBodySprite(pal: Palette): HTMLCanvasElement | null {
+  if (pal.glow <= 0) return null;
+  const c = document.createElement("canvas");
+  c.width = CELL + 2 * SPRITE_PAD;
+  c.height = CELL + 2 * SPRITE_PAD;
+  const sctx = c.getContext("2d");
+  if (!sctx) return null;
+  drawBodyCell(sctx, SPRITE_PAD, SPRITE_PAD, pal);
+  return c;
+}
+
 function drawFrame(
   ctx: CanvasRenderingContext2D,
   snake: Cell[],
@@ -125,6 +151,7 @@ function drawFrame(
   score: number,
   fruitsImg: HTMLImageElement,
   pal: Palette,
+  bodySprite: HTMLCanvasElement | null,
 ) {
   const W = COLS * CELL;
   const H = ROWS * CELL;
@@ -141,14 +168,14 @@ function drawFrame(
   ctx.shadowBlur = 0;
 
   // Snake body
-  ctx.fillStyle = pal.snakeBody;
-  ctx.shadowColor = pal.snakeBody;
-  ctx.shadowBlur = pal.glow;
   for (let i = 1; i < snake.length; i++) {
     const s = snake[i];
-    ctx.fillRect(s.x * CELL + 1, s.y * CELL + 1, CELL - 2, CELL - 2);
+    if (bodySprite) {
+      ctx.drawImage(bodySprite, s.x * CELL - SPRITE_PAD, s.y * CELL - SPRITE_PAD);
+    } else {
+      drawBodyCell(ctx, s.x * CELL, s.y * CELL, pal);
+    }
   }
-  ctx.shadowBlur = 0;
 
   // Snake head (brighter)
   if (snake.length > 0) {
@@ -208,6 +235,7 @@ export function initGame(
   const ctx = canvas.getContext("2d")!;
   let pal: Palette =
     PALETTES[resolveSkin(options?.skin ?? DEFAULT_SKIN, AVAILABLE_SKINS)]!;
+  let bodySprite = buildBodySprite(pal);
 
   let snake: Cell[] = [
     { x: 16, y: 16 },
@@ -315,16 +343,16 @@ export function initGame(
       }
     }
 
-    drawFrame(ctx, snake, food, score, fruitsImg, pal);
+    drawFrame(ctx, snake, food, score, fruitsImg, pal, bodySprite);
   }
 
   // Start immediately — image load is async; guard drawImage inside drawFrame
-  drawFrame(ctx, snake, food, score, fruitsImg, pal);
+  drawFrame(ctx, snake, food, score, fruitsImg, pal, bodySprite);
   timerId = setInterval(step, interval);
 
   fruitsImg.onload = () => {
     // Re-draw once image is ready so food sprite appears
-    if (!dead && !paused) drawFrame(ctx, snake, food, score, fruitsImg, pal);
+    if (!dead && !paused) drawFrame(ctx, snake, food, score, fruitsImg, pal, bodySprite);
   };
 
   function pause() {
@@ -334,16 +362,19 @@ export function initGame(
     paused = false;
   }
   function redraw() {
-    drawFrame(ctx, snake, food, score, fruitsImg, pal);
+    drawFrame(ctx, snake, food, score, fruitsImg, pal, bodySprite);
     if (dead) drawGameOver(ctx, score, pal);
   }
   function setSkin(id: SkinId) {
     pal = PALETTES[resolveSkin(id, AVAILABLE_SKINS)]!;
+    bodySprite = buildBodySprite(pal);
     if (paused || dead) redraw();
   }
   function destroy() {
     if (timerId !== null) clearInterval(timerId);
     window.removeEventListener("keydown", onKey);
+    fruitsImg.onload = null;
+    bodySprite = null;
   }
 
   return { pause, resume, destroy, setSkin };

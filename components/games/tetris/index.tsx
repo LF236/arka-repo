@@ -15,9 +15,11 @@ interface GameProps {
 }
 
 export default function TetrisGame({ gameId }: GameProps) {
-  const [score, setScore] = useState(0);
-  const [lines, setLines] = useState(0);
-  const [level, setLevel] = useState(1);
+  const scoreRef = useRef(0);
+  const scoreEl = useRef<HTMLDivElement>(null);
+  const linesEl = useRef<HTMLDivElement>(null);
+  const levelEl = useRef<HTMLDivElement>(null);
+  const [finalScore, setFinalScore] = useState(0);
   const [paused, setPaused] = useState(false);
   const [over, setOver] = useState(false);
   const [name, setName] = useState(
@@ -45,11 +47,23 @@ export default function TetrisGame({ gameId }: GameProps) {
       boardCanvas,
       nextCanvas,
       {
-        onScore: (s) => setScore(s),
-        onLines: (l) => setLines(l),
-        onLevel: (l) => setLevel(l),
-        onGameOver: (finalScore) => {
-          setScore(finalScore);
+        onScore: (s) => {
+          scoreRef.current = s;
+          if (scoreEl.current)
+            scoreEl.current.textContent = s.toLocaleString("es-ES");
+        },
+        onLines: (l) => {
+          if (linesEl.current) linesEl.current.textContent = String(l);
+        },
+        onLevel: (l) => {
+          if (levelEl.current)
+            levelEl.current.textContent = String(l).padStart(2, "0");
+        },
+        onGameOver: (final) => {
+          scoreRef.current = final;
+          if (scoreEl.current)
+            scoreEl.current.textContent = final.toLocaleString("es-ES");
+          setFinalScore(final);
           setOver(true);
         },
       },
@@ -79,14 +93,15 @@ export default function TetrisGame({ gameId }: GameProps) {
 
   const handleEnd = () => {
     controllerRef.current?.pause();
+    setFinalScore(scoreRef.current);
     setOver(true);
   };
 
   const saveScore = () => {
-    void insertScore("tetris", name, score);
+    void insertScore("tetris", name, finalScore);
     try {
       const all = JSON.parse(localStorage.getItem("av_scores_tetris") || "[]");
-      all.push({ score, name, at: Date.now() });
+      all.push({ score: finalScore, name, at: Date.now() });
       localStorage.setItem("av_scores_tetris", JSON.stringify(all));
       localStorage.setItem("av_player_name", name);
     } catch {}
@@ -95,9 +110,10 @@ export default function TetrisGame({ gameId }: GameProps) {
 
   const restart = () => {
     controllerRef.current?.destroy();
-    setScore(0);
-    setLines(0);
-    setLevel(1);
+    scoreRef.current = 0;
+    if (scoreEl.current) scoreEl.current.textContent = "0";
+    if (linesEl.current) linesEl.current.textContent = "0";
+    if (levelEl.current) levelEl.current.textContent = "01";
     setPaused(false);
     setOver(false);
     setSaved(false);
@@ -117,15 +133,21 @@ export default function TetrisGame({ gameId }: GameProps) {
           </div>
           <div className="hud-stat">
             <div className="l">Puntuación</div>
-            <div className="v">{score.toLocaleString("es-ES")}</div>
+            <div className="v" ref={scoreEl}>
+              0
+            </div>
           </div>
           <div className="hud-stat">
             <div className="l">Líneas</div>
-            <div className="v">{lines}</div>
+            <div className="v" ref={linesEl}>
+              0
+            </div>
           </div>
           <div className="hud-stat level">
             <div className="l">Nivel</div>
-            <div className="v">{String(level).padStart(2, "0")}</div>
+            <div className="v" ref={levelEl}>
+              01
+            </div>
           </div>
         </div>
         <div className="hud-actions max-lg:hidden">
@@ -230,7 +252,7 @@ export default function TetrisGame({ gameId }: GameProps) {
           <div className="modal">
             <h2>FIN DEL JUEGO</h2>
             <div className="final-label">PUNTUACIÓN FINAL</div>
-            <div className="final">{score.toLocaleString("es-ES")}</div>
+            <div className="final">{finalScore.toLocaleString("es-ES")}</div>
             {!saved ? (
               <div className="input-row">
                 <input

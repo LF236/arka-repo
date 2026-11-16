@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Arcade Vault — plataforma online para jugar y competir por puntos. Juegos canvas reales (Asteroides, Tetris, Arkanoid, Snake) con leaderboard en Supabase; el resto del catálogo son entradas mock.
+Arcade Vault — plataforma online para jugar y competir por puntos. Juegos canvas reales (Asteroides, Tetris, Arkanoid, Snake, Frogger) con leaderboard en Supabase; el resto del catálogo son entradas mock.
 
 Idioma del proyecto: español (UI, specs, commits de spec).
 
@@ -37,6 +37,7 @@ Todo cambio funcional pasa por un spec en `specs/NN-slug.md` (estructura en `.cl
 - Agente `game-jam` (`.claude/agents/game-jam.md`): recibe un tema, inventa un juego original y escribe 2–3 specs en `specs/game-jam/<game-id>/` (`01-…-juego`, `02-…-integracion`, `03-…-pulido` o `03-…-<feature>`). Corre con `model: sonnet`. Autónomo, sin preguntas, solo specs en `Borrador`. Para implementar: promover a `specs/NN-slug.md` y `/spec-impl`.
 - Agente `skin-designer` (`.claude/agents/skin-designer.md`): recibe el slug de **un** juego e implementa directamente sus skins (`clasico` default, `neon`, `retro`; `pastel` opcional), legibles en oscuro. Corre con `model: sonnet`. Sin spec, sin commits, sin preguntas; solo el juego pedido. Registro en `references/game-with-themes.md`. Crea la infra compartida (`lib/skins.ts`, `components/SkinContext.tsx`, selector en `Nav`) la primera vez.
 - Agente `mobile-porter` (`.claude/agents/mobile-porter.md`): recibe el slug de **un juego nuevo** y lo porta a móvil (`<GamePad>`, layout bajo `lg`) siguiendo SPEC 11. Corre con `model: sonnet`. Sin spec, sin commits, sin preguntas; no toca los 4 juegos ya portados ni `game.ts`. Flujo: `/add-game` → `/spec-impl` → `mobile-porter`.
+- Agente `game-performance-booster` (`.claude/agents/game-performance-booster.md`): recibe el slug de **un** juego, lo audita contra los problemas de SPEC 13 (draw en pausa, `shadowBlur` en skins con glow, allocaciones por frame, HUD en `useState`, audio por colisión con `cloneNode().play()` → Web Audio, fugas) y arregla los que existan en `components/games/<slug>/`. Corre con `model: sonnet`. Sin spec, sin commits, sin preguntas, sin memoria persistente.
 - Un spec = una rama `spec-NN-slug` = un PR a `main`. Al terminar, `Status: Implemented` en el spec.
 
 ## Architecture
@@ -55,7 +56,7 @@ Next.js 16 App Router con React 19 y TypeScript strict.
 | `/biblioteca`         | Catálogo de juegos                                                     |
 | `/juego/[id]`         | Ficha del juego + leaderboard lateral                                  |
 | `/juego/[id]/jugar`   | Reproductor: juego canvas si está en `CANVAS_GAMES`, si no player mock |
-| `/juego/<slug>/jugar` | Rutas estáticas por juego (arkanoid, snake, tetris)                    |
+| `/juego/<slug>/jugar` | Rutas estáticas por juego (arkanoid, frogger, snake, tetris)           |
 | `/salon`              | Salón de la fama (leaderboard global + tab por juego)                  |
 | `/acerca`             | About + formulario de contacto                                         |
 | `/auth`               | Login mock                                                             |

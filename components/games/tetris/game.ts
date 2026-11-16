@@ -88,6 +88,9 @@ export function initGame(
     resolveSkin(options?.skin ?? DEFAULT_SKIN, AVAILABLE_SKINS)
   ] as Palette;
 
+  let spriteCache: HTMLCanvasElement[] | null = null;
+  let spritePad = 0;
+
   const board: Board = createBoard();
   let current: Piece;
   let next: Piece;
@@ -218,7 +221,46 @@ export function initGame(
     drawNext();
   }
 
+  function buildSpriteCache(): void {
+    spriteCache = null;
+    if (!palette.glow) return;
+    const pad = 2 * palette.glow;
+    const side = BLOCK + 2 * pad;
+    const cache: HTMLCanvasElement[] = [];
+    for (let i = 1; i < palette.pieces.length; i++) {
+      const sprite = document.createElement("canvas");
+      sprite.width = side;
+      sprite.height = side;
+      const sctx = sprite.getContext("2d")!;
+      sctx.translate(pad, pad);
+      drawBlockDirect(sctx, 0, 0, i, BLOCK);
+      cache[i] = sprite;
+    }
+    spriteCache = cache;
+    spritePad = pad;
+  }
+
   function drawBlock(
+    context: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    colorIndex: number,
+    size: number,
+    alpha?: number,
+  ): void {
+    if (!colorIndex) return;
+    if (spriteCache && alpha === undefined && size === BLOCK) {
+      context.drawImage(
+        spriteCache[colorIndex],
+        x * size - spritePad,
+        y * size - spritePad,
+      );
+      return;
+    }
+    drawBlockDirect(context, x, y, colorIndex, size, alpha);
+  }
+
+  function drawBlockDirect(
     context: CanvasRenderingContext2D,
     x: number,
     y: number,
@@ -362,6 +404,7 @@ export function initGame(
   dropInterval = 1000;
   dropAccum = 0;
   lastTime = performance.now();
+  buildSpriteCache();
   next = randomPiece();
   spawn();
   callbacks.onScore(score);
@@ -387,9 +430,11 @@ export function initGame(
       cancelAnimationFrame(animId);
       document.removeEventListener("keydown", onKeyDown);
       gameOver = true;
+      spriteCache = null;
     },
     setSkin(id: SkinId) {
       palette = PALETTES[resolveSkin(id, AVAILABLE_SKINS)] as Palette;
+      buildSpriteCache();
       drawNext();
       if (paused || gameOver) draw();
     },

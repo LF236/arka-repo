@@ -107,6 +107,7 @@ const BLOCKS_ORIGIN_X = (800 - BLOCK_COLS * BLOCK_W) / 2;
 const BLOCKS_ORIGIN_Y = 80;
 const BASE_BALL_VX = 200;
 const BASE_BALL_VY = -300;
+const SPRITE_PAD = 32; // >= 2 x glow (12)
 
 // ─── initGame ─────────────────────────────────────────────────────────────────
 
@@ -116,17 +117,91 @@ export function initGame(
   options?: { skin?: SkinId },
 ): GameController {
   const ctx = canvas.getContext("2d")!;
-  let palette = PALETTES[resolveSkin(options?.skin ?? "clasico", AVAILABLE_SKINS)]!;
+  let palette =
+    PALETTES[resolveSkin(options?.skin ?? "clasico", AVAILABLE_SKINS)]!;
 
-  // Audio created fresh per game instance — prevents double sounds from
-  // React StrictMode double-invoking effects or multiple initGame calls.
-  const bounceSound = new Audio("/games/arkanoid/sounds/ball-bounce.mp3");
-  const breakSound = new Audio("/games/arkanoid/sounds/break-sound.mp3");
+  // Web Audio: buffers decodificados una vez; cada play es un source barato
+  // (antes cloneNode() por colisión acumulaba elementos <audio> y ralentizaba móvil).
+  let audioCtx: AudioContext | null = null;
+  const buffers: Record<string, AudioBuffer | undefined> = {};
+  try {
+    const AC =
+      window.AudioContext ??
+      (window as unknown as { webkitAudioContext?: typeof AudioContext })
+        .webkitAudioContext;
+    if (AC) {
+      audioCtx = new AC();
+      for (const [k, url] of [
+        ["bounce", "/games/arkanoid/sounds/ball-bounce.mp3"],
+        ["break", "/games/arkanoid/sounds/break-sound.mp3"],
+      ]) {
+        fetch(url)
+          .then((r) => r.arrayBuffer())
+          .then((d) => audioCtx!.decodeAudioData(d))
+          .then((buf) => {
+            buffers[k] = buf;
+          })
+          .catch(() => {});
+      }
+    }
+  } catch {
+    audioCtx = null;
+  }
 
-  const playBounce = () =>
-    (bounceSound.cloneNode() as HTMLAudioElement).play().catch(() => {});
-  const playBreak = () =>
-    (breakSound.cloneNode() as HTMLAudioElement).play().catch(() => {});
+  const playSound = (key: string) => {
+    const buf = buffers[key];
+    if (!audioCtx || !buf) return;
+    if (audioCtx.state === "suspended") audioCtx.resume().catch(() => {});
+    const src = audioCtx.createBufferSource();
+    src.buffer = buf;
+    src.connect(audioCtx.destination);
+    src.start();
+  };
+  const playBounce = () => playSound("bounce");
+  const playBreak = () => playSound("break");
+
+  // Sprite cache de bloques para skins con glow (null si glow === 0)
+  let blockSprites: Map<string, HTMLCanvasElement> | null = null;
+
+  function drawGlowBlock(
+    g: CanvasRenderingContext2D,
+    c: string,
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    glow: number,
+  ) {
+    g.fillStyle = c;
+    g.shadowColor = c;
+    g.shadowBlur = glow;
+    g.fillRect(x + 1, y + 1, w - 2, h - 2);
+    g.shadowBlur = 0;
+  }
+
+  function rebuildSprites() {
+    blockSprites = null;
+    if (palette.useSprites || palette.glow <= 0) return;
+    const map = new Map<string, HTMLCanvasElement>();
+    for (const color of Object.keys(palette.blocks)) {
+      const sp = document.createElement("canvas");
+      sp.width = BLOCK_W + 2 * SPRITE_PAD;
+      sp.height = BLOCK_H + 2 * SPRITE_PAD;
+      const g = sp.getContext("2d")!;
+      drawGlowBlock(
+        g,
+        palette.blocks[color],
+        SPRITE_PAD,
+        SPRITE_PAD,
+        BLOCK_W,
+        BLOCK_H,
+        palette.glow,
+      );
+      map.set(color, sp);
+    }
+    blockSprites = map;
+  }
+  rebuildSprites();
 
   // ── State ──────────────────────────────────────────────────────────────────
   const paddle = { x: 0, y: 560, w: 81, h: 14 };
@@ -288,7 +363,12 @@ export function initGame(
 
     // Explosions
     for (const exp of explosions) exp.elapsed += dt * 1000;
-    explosions = explosions.filter((exp) => exp.elapsed < EXPLOSION_DURATION);
+    let w = 0;
+    for (let i = 0; i < explosions.length; i++) {
+      if (explosions[i].elapsed < EXPLOSION_DURATION)
+        explosions[w++] = explosions[i];
+    }
+    explosions.length = w;
 
     // Ball lost — only here do lives change
     if (ball.y > canvas.height) {
@@ -347,11 +427,20 @@ export function initGame(
 
     for (const block of blocks) {
       if (!block.alive) continue;
-      const c = p.blocks[block.color] ?? p.paddle;
-      ctx.fillStyle = c;
-      ctx.shadowColor = c;
-      ctx.shadowBlur = p.glow;
-      ctx.fillRect(block.x + 1, block.y + 1, block.w - 2, block.h - 2);
+      const sp = blockSprites?.get(block.color);
+      if (sp) {
+        ctx.drawImage(sp, block.x - SPRITE_PAD, block.y - SPRITE_PAD);
+      } else {
+        drawGlowBlock(
+          ctx,
+          p.blocks[block.color] ?? p.paddle,
+          block.x,
+          block.y,
+          block.w,
+          block.h,
+          p.glow,
+        );
+      }
     }
     ctx.shadowBlur = 0;
 
@@ -390,7 +479,11 @@ export function initGame(
     const dt = Math.min((timestamp - lastTime) / 1000, 0.05); // cap at 50ms
     lastTime = timestamp;
 
-    if (!paused) update(dt);
+    if (paused) {
+      raf = requestAnimationFrame(loop);
+      return;
+    }
+    update(dt);
     draw();
 
     raf = requestAnimationFrame(loop);
@@ -448,10 +541,14 @@ export function initGame(
     },
     setSkin: (id) => {
       palette = PALETTES[resolveSkin(id, AVAILABLE_SKINS)]!;
+      rebuildSprites();
       if (paused || gameState !== "playing") draw();
     },
     destroy: () => {
       destroyed = true;
+      audioCtx?.close().catch(() => {});
+      audioCtx = null;
+      blockSprites = null;
       cancelAnimationFrame(raf);
       canvas.removeEventListener("mousemove", onMouseMove);
       document.removeEventListener("keydown", onKeyDown);

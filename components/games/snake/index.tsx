@@ -15,7 +15,9 @@ interface GameProps {
 }
 
 export default function SnakeGame({ gameId }: GameProps) {
-  const [score, setScore] = useState(0);
+  const [finalScore, setFinalScore] = useState(0);
+  const scoreRef = useRef(0);
+  const scoreEl = useRef<HTMLDivElement>(null);
   const [paused, setPaused] = useState(false);
   const [over, setOver] = useState(false);
   const [name, setName] = useState(
@@ -40,9 +42,16 @@ export default function SnakeGame({ gameId }: GameProps) {
     const controller = initGame(
       canvas,
       {
-        onScore: (s) => setScore(s),
-        onGameOver: (finalScore) => {
-          setScore(finalScore);
+        onScore: (s) => {
+          scoreRef.current = s;
+          if (scoreEl.current)
+            scoreEl.current.textContent = s.toLocaleString("es-ES");
+        },
+        onGameOver: (final) => {
+          scoreRef.current = final;
+          if (scoreEl.current)
+            scoreEl.current.textContent = final.toLocaleString("es-ES");
+          setFinalScore(final);
           setOver(true);
         },
       },
@@ -72,14 +81,15 @@ export default function SnakeGame({ gameId }: GameProps) {
 
   const handleEnd = () => {
     controllerRef.current?.pause();
+    setFinalScore(scoreRef.current);
     setOver(true);
   };
 
   const saveScore = () => {
-    void insertScore("snake", name, score);
+    void insertScore("snake", name, finalScore);
     try {
       const all = JSON.parse(localStorage.getItem("av_scores_snake") || "[]");
-      all.push({ score, name, at: Date.now() });
+      all.push({ score: finalScore, name, at: Date.now() });
       localStorage.setItem("av_scores_snake", JSON.stringify(all));
       localStorage.setItem("av_player_name", name);
     } catch {}
@@ -88,7 +98,8 @@ export default function SnakeGame({ gameId }: GameProps) {
 
   const restart = () => {
     controllerRef.current?.destroy();
-    setScore(0);
+    scoreRef.current = 0;
+    if (scoreEl.current) scoreEl.current.textContent = "0";
     setPaused(false);
     setOver(false);
     setSaved(false);
@@ -108,7 +119,9 @@ export default function SnakeGame({ gameId }: GameProps) {
           </div>
           <div className="hud-stat">
             <div className="l">Puntuación</div>
-            <div className="v">{score.toLocaleString("es-ES")}</div>
+            <div className="v" ref={scoreEl}>
+              0
+            </div>
           </div>
         </div>
         <div className="hud-actions max-lg:hidden">
@@ -192,7 +205,7 @@ export default function SnakeGame({ gameId }: GameProps) {
           <div className="modal">
             <h2>FIN DEL JUEGO</h2>
             <div className="final-label">PUNTUACIÓN FINAL</div>
-            <div className="final">{score.toLocaleString("es-ES")}</div>
+            <div className="final">{finalScore.toLocaleString("es-ES")}</div>
             {!saved ? (
               <div className="input-row">
                 <input
