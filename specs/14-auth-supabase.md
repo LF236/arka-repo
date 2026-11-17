@@ -148,26 +148,26 @@ export async function insertScore(
 
 ## Acceptance criteria
 
-- [ ] Registro con email+contraseña+usuario deja `user_metadata.username` guardado y envía el correo de verificación.
-- [ ] Tras registrarse, la app permanece en `/auth` con el mensaje de revisar el correo y sin sesión activa.
-- [ ] Iniciar sesión con email no verificado muestra un error en español y no crea sesión.
-- [ ] Tras verificar el correo, el enlace pasa por `/auth/callback` y deja al usuario con sesión en `/`.
-- [ ] Login con Google y con GitHub crea sesión y redirige a `/`.
-- [ ] `/auth/callback` con `next=//evil.com` o `next=https://evil.com` redirige a `/`.
-- [ ] "¿Olvidaste tu contraseña?" envía correo; su enlace abre `/auth/reset-password` y permite fijar nueva contraseña; la contraseña anterior deja de funcionar.
-- [ ] `/auth/reset-password` sin sesión de recuperación muestra "Enlace inválido o expirado".
-- [ ] Recargar la página mantiene la sesión (cookies refrescadas por `proxy.ts`).
-- [ ] Nav con sesión muestra avatar (imagen OAuth o inicial), nombre y "Cerrar sesión"; cerrar sesión vuelve a mostrar "Iniciar Sesión".
-- [ ] Un invitado puede jugar los 5 juegos canvas completos sin sesión.
-- [ ] Al terminar partida, un invitado ve el CTA de login y no se crea fila en `scores` ni clave `av_scores_<slug>`.
-- [ ] Tras login desde ese CTA, el usuario vuelve a `/juego/<slug>/jugar`.
-- [ ] Con sesión, el input de nombre viene con el nombre del usuario y es editable.
-- [ ] Al guardar, la fila en `scores` tiene `player_name` = texto escrito y `user_id` = id del usuario (verificado con `mcp__supabase__execute_sql`).
-- [ ] Un `INSERT` anónimo en `scores` (cliente sin sesión) es rechazado por RLS.
-- [ ] Un `INSERT` con `user_id` distinto de `auth.uid()` es rechazado por RLS.
-- [ ] `SELECT` público sigue funcionando: `/salon` y `/juego/[id]` muestran scores sin sesión; filas antiguas con `user_id NULL` siguen visibles.
-- [ ] No quedan referencias a `av_user`, `login()` del contexto mock ni `av_player_name` en `app/`, `components/` y `lib/`.
-- [ ] `npm run build` y `npm run lint` pasan sin errores nuevos.
+- [X] Registro con email+contraseña+usuario deja `user_metadata.username` guardado y envía el correo de verificación.
+- [X] Tras registrarse, la app permanece en `/auth` con el mensaje de revisar el correo y sin sesión activa.
+- [X] Iniciar sesión con email no verificado muestra un error en español y no crea sesión.
+- [X] Tras verificar el correo, el enlace pasa por `/auth/callback` y deja al usuario con sesión en `/`.
+- [X] Login con Google y con GitHub crea sesión y redirige a `/`.
+- [X] `/auth/callback` con `next=//evil.com` o `next=https://evil.com` redirige a `/`.
+- [X] "¿Olvidaste tu contraseña?" envía correo; su enlace abre `/auth/reset-password` y permite fijar nueva contraseña; la contraseña anterior deja de funcionar.
+- [X] `/auth/reset-password` sin sesión de recuperación muestra "Enlace inválido o expirado".
+- [X] Recargar la página mantiene la sesión (cookies refrescadas por `proxy.ts`).
+- [X] Nav con sesión muestra avatar (imagen OAuth o inicial), nombre y "Cerrar sesión"; cerrar sesión vuelve a mostrar "Iniciar Sesión".
+- [X] Un invitado puede jugar los 5 juegos canvas completos sin sesión.
+- [X] Al terminar partida, un invitado ve el CTA de login y no se crea fila en `scores` ni clave `av_scores_<slug>`.
+- [X] Tras login desde ese CTA, el usuario vuelve a `/juego/<slug>/jugar`.
+- [X] Con sesión, el input de nombre viene con el nombre del usuario y es editable.
+- [X] Al guardar, la fila en `scores` tiene `player_name` = texto escrito y `user_id` = id del usuario (verificado con `mcp__supabase__execute_sql`).
+- [X] Un `INSERT` anónimo en `scores` (cliente sin sesión) es rechazado por RLS.
+- [X] Un `INSERT` con `user_id` distinto de `auth.uid()` es rechazado por RLS.
+- [X] `SELECT` público sigue funcionando: `/salon` y `/juego/[id]` muestran scores sin sesión; filas antiguas con `user_id NULL` siguen visibles.
+- [X] No quedan referencias a `av_user`, `login()` del contexto mock ni `av_player_name` en `app/`, `components/` y `lib/`.
+- [X] `npm run build` y `npm run lint` pasan sin errores nuevos.
 
 ---
 

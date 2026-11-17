@@ -5,6 +5,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/components/UserContext";
 import { createClient } from "@/lib/supabase/client";
+import {
+  MIN_PASSWORD_LENGTH,
+  passwordIssues,
+  weakPasswordMessage,
+} from "@/lib/password";
+import PasswordChecklist from "../PasswordChecklist";
 
 function Header() {
   return (
@@ -41,6 +47,10 @@ export default function ResetPassword() {
       setError("Las contraseñas no coinciden.");
       return;
     }
+    if (passwordIssues(pass).length > 0) {
+      setError("La contraseña no cumple los requisitos de la lista.");
+      return;
+    }
     setLoading(true);
     try {
       const { error } = await createClient().auth.updateUser({
@@ -49,7 +59,7 @@ export default function ResetPassword() {
       if (error) {
         setError(
           error.code === "weak_password"
-            ? "La contraseña es muy débil (mínimo 6 caracteres)."
+            ? weakPasswordMessage(error as { reasons?: string[] })
             : error.code === "same_password"
               ? "La nueva contraseña debe ser distinta a la anterior."
               : "No se pudo actualizar la contraseña. Inténtalo de nuevo.",
@@ -95,9 +105,10 @@ export default function ResetPassword() {
                 onChange={(e) => setPass(e.target.value)}
                 placeholder="••••••••"
                 required
-                minLength={6}
+                minLength={MIN_PASSWORD_LENGTH}
                 autoComplete="new-password"
               />
+              <PasswordChecklist password={pass} />
             </div>
             <div className="field">
               <label>Confirmar contraseña</label>
@@ -107,7 +118,7 @@ export default function ResetPassword() {
                 onChange={(e) => setConfirm(e.target.value)}
                 placeholder="••••••••"
                 required
-                minLength={6}
+                minLength={MIN_PASSWORD_LENGTH}
                 autoComplete="new-password"
               />
             </div>

@@ -5,6 +5,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import type { AuthError } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { safeNext } from "@/lib/safe-next";
+import {
+  MIN_PASSWORD_LENGTH,
+  passwordIssues,
+  weakPasswordMessage,
+} from "@/lib/password";
+import PasswordChecklist from "./PasswordChecklist";
 
 function authErrorMessage(err: AuthError): string {
   switch (err.code) {
@@ -16,7 +22,7 @@ function authErrorMessage(err: AuthError): string {
     case "email_exists":
       return "Ese correo ya está registrado.";
     case "weak_password":
-      return "La contraseña es muy débil (mínimo 6 caracteres).";
+      return weakPasswordMessage(err as { reasons?: string[] });
     case "over_email_send_rate_limit":
     case "over_request_rate_limit":
       return "Demasiados intentos. Espera un momento e inténtalo de nuevo.";
@@ -62,6 +68,10 @@ function AuthForm() {
     const supabase = createClient();
 
     try {
+      if (tab === "up" && passwordIssues(pass).length > 0) {
+        setError("La contraseña no cumple los requisitos de la lista.");
+        return;
+      }
       if (tab === "reset") {
         const redirectTo = new URL("/auth/callback", window.location.origin);
         redirectTo.searchParams.set("next", "/auth/reset-password");
@@ -227,11 +237,12 @@ function AuthForm() {
                 onChange={(e) => setPass(e.target.value)}
                 placeholder="••••••••"
                 required
-                minLength={6}
+                minLength={tab === "up" ? MIN_PASSWORD_LENGTH : undefined}
                 autoComplete={
                   tab === "in" ? "current-password" : "new-password"
                 }
               />
+              {tab === "up" && <PasswordChecklist password={pass} />}
             </div>
           )}
           {tab === "in" && (
