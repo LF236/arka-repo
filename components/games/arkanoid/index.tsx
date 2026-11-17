@@ -6,6 +6,7 @@ import GamePad from "@/components/GamePad";
 import { initGame } from "./game";
 import { insertScore } from "@/lib/supabase/leaderboard";
 import { useSkin } from "@/components/SkinContext";
+import { useUser } from "@/components/UserContext";
 import { SKIN_LABELS } from "@/lib/skins";
 import { AVAILABLE_SKINS } from "./skins";
 import type { GameController } from "./game";
@@ -22,9 +23,10 @@ export default function ArkanoidGame({ gameId }: GameProps) {
   const [finalScore, setFinalScore] = useState(0);
   const [paused, setPaused] = useState(false);
   const [over, setOver] = useState(false);
-  const [name, setName] = useState(
-    () => localStorage.getItem("av_player_name") ?? "",
-  );
+  const { user } = useUser();
+  const defaultName = user ? user.name.toUpperCase().slice(0, 10) : "";
+  const [nameEdit, setName] = useState<string | null>(null);
+  const name = nameEdit ?? defaultName;
   const [saved, setSaved] = useState(false);
   const [gameKey, setGameKey] = useState(0);
 
@@ -98,14 +100,14 @@ export default function ArkanoidGame({ gameId }: GameProps) {
   };
 
   const saveScore = () => {
-    void insertScore("arkanoid", name, finalScore);
+    if (!user) return;
+    void insertScore("arkanoid", name, finalScore, user.id);
     try {
       const all = JSON.parse(
         localStorage.getItem("av_scores_arkanoid") || "[]",
       );
       all.push({ score: finalScore, name, at: Date.now() });
       localStorage.setItem("av_scores_arkanoid", JSON.stringify(all));
-      localStorage.setItem("av_player_name", name);
     } catch {}
     setSaved(true);
   };
@@ -119,7 +121,7 @@ export default function ArkanoidGame({ gameId }: GameProps) {
     setPaused(false);
     setOver(false);
     setSaved(false);
-    setName(localStorage.getItem("av_player_name") ?? "");
+    setName(null);
     setGameKey((k) => k + 1);
   };
 
@@ -130,7 +132,7 @@ export default function ArkanoidGame({ gameId }: GameProps) {
           <div className="hud-stat">
             <div className="l">Jugador</div>
             <div className="v" style={{ color: "var(--ink)" }}>
-              {name}
+              {defaultName || "INVITADO"}
             </div>
           </div>
           <div className="hud-stat">
@@ -241,7 +243,16 @@ export default function ArkanoidGame({ gameId }: GameProps) {
             <h2>FIN DEL JUEGO</h2>
             <div className="final-label">PUNTUACIÓN FINAL</div>
             <div className="final">{finalScore.toLocaleString("es-ES")}</div>
-            {!saved ? (
+            {!user ? (
+              <div className="input-row">
+                <Link
+                  href="/auth?next=/juego/arkanoid/jugar"
+                  className="btn yellow"
+                >
+                  INICIA SESIÓN PARA GUARDAR TU PUNTUACIÓN
+                </Link>
+              </div>
+            ) : !saved ? (
               <div className="input-row">
                 <input
                   value={name}

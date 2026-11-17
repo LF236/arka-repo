@@ -38,7 +38,7 @@ function authErrorMessage(err: AuthError): string {
 }
 
 function AuthForm() {
-  const [tab, setTab] = useState<"in" | "up">("in");
+  const [tab, setTab] = useState<"in" | "up" | "reset">("in");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
@@ -49,8 +49,18 @@ function AuthForm() {
   const params = useSearchParams();
   const next = safeNext(params.get("next"));
   const callbackError = params.get("error") === "callback";
+  const callbackNotice =
+    params.get("reason") === "otp_expired"
+      ? "El enlace caducó o ya fue usado. Inicia sesión o solicita uno nuevo."
+      : "Si ya verificaste tu correo, inicia sesión con tu correo y contraseña. Si no, solicita un enlace nuevo.";
 
-  const switchTab = (t: "in" | "up") => {
+  const clearFields = () => {
+    setUsername("");
+    setEmail("");
+    setPass("");
+  };
+
+  const switchTab = (t: "in" | "up" | "reset") => {
     setTab(t);
     setError(null);
     setNotice(null);
@@ -64,7 +74,22 @@ function AuthForm() {
     const supabase = createClient();
 
     try {
-      if (tab === "in") {
+      if (tab === "reset") {
+        const redirectTo = new URL("/auth/callback", window.location.origin);
+        redirectTo.searchParams.set("next", "/auth/reset-password");
+        const { error } = await supabase.auth.resetPasswordForEmail(
+          email.trim(),
+          { redirectTo: redirectTo.toString() },
+        );
+        if (error) {
+          setError(authErrorMessage(error));
+          return;
+        }
+        setNotice(
+          "Si el correo está registrado, recibirás un enlace para recuperar tu contraseña.",
+        );
+        clearFields();
+      } else if (tab === "in") {
         const { error } = await supabase.auth.signInWithPassword({
           email: email.trim(),
           password: pass,
@@ -73,6 +98,7 @@ function AuthForm() {
           setError(authErrorMessage(error));
           return;
         }
+        clearFields();
         router.push(next);
         router.refresh();
       } else {
@@ -96,7 +122,7 @@ function AuthForm() {
           return;
         }
         setNotice("Revisa tu correo para verificar tu cuenta.");
-        setPass("");
+        clearFields();
       }
     } catch {
       setError("Ocurrió un error. Inténtalo de nuevo.");
@@ -151,20 +177,34 @@ function AuthForm() {
           </div>
         </div>
 
-        <div className="auth-tabs">
-          <button
-            className={tab === "in" ? "on" : ""}
-            onClick={() => switchTab("in")}
+        {tab === "reset" ? (
+          <div
+            className="mono"
+            style={{
+              fontSize: 12,
+              letterSpacing: "0.12em",
+              textAlign: "center",
+              margin: "4px 0 14px",
+            }}
           >
-            INICIAR SESIÓN
-          </button>
-          <button
-            className={tab === "up" ? "on" : ""}
-            onClick={() => switchTab("up")}
-          >
-            CREAR CUENTA
-          </button>
-        </div>
+            RECUPERAR CONTRASEÑA
+          </div>
+        ) : (
+          <div className="auth-tabs">
+            <button
+              className={tab === "in" ? "on" : ""}
+              onClick={() => switchTab("in")}
+            >
+              INICIAR SESIÓN
+            </button>
+            <button
+              className={tab === "up" ? "on" : ""}
+              onClick={() => switchTab("up")}
+            >
+              CREAR CUENTA
+            </button>
+          </div>
+        )}
 
         <form onSubmit={submit}>
           {tab === "up" && (
@@ -190,33 +230,46 @@ function AuthForm() {
               autoComplete="email"
             />
           </div>
-          <div className="field">
-            <label>Contraseña</label>
-            <input
-              type="password"
-              value={pass}
-              onChange={(e) => setPass(e.target.value)}
-              placeholder="••••••••"
-              required
-              minLength={6}
-              autoComplete={tab === "in" ? "current-password" : "new-password"}
-            />
-          </div>
-          {(error || callbackError) && (
+          {tab !== "reset" && (
+            <div className="field">
+              <label>Contraseña</label>
+              <input
+                type="password"
+                value={pass}
+                onChange={(e) => setPass(e.target.value)}
+                placeholder="••••••••"
+                required
+                minLength={6}
+                autoComplete={
+                  tab === "in" ? "current-password" : "new-password"
+                }
+              />
+            </div>
+          )}
+          {tab === "in" && (
+            <button
+              type="button"
+              className="btn ghost"
+              style={{ width: "100%", marginTop: 4 }}
+              onClick={() => switchTab("reset")}
+            >
+              ¿OLVIDASTE TU CONTRASEÑA?
+            </button>
+          )}
+          {error && (
             <div
               role="alert"
               style={{ ...msgStyle, color: "var(--red, #ff4d6d)" }}
             >
-              {error ??
-                "No se pudo completar la verificación. Inténtalo de nuevo."}
+              {error}
             </div>
           )}
-          {notice && (
+          {(notice || (callbackError && !error)) && (
             <div
               role="status"
               style={{ ...msgStyle, color: "var(--cyan, #22e6ff)" }}
             >
-              {notice}
+              {notice ?? callbackNotice}
             </div>
           )}
           <button
@@ -227,39 +280,53 @@ function AuthForm() {
           >
             {loading
               ? "PROCESANDO…"
-              : tab === "in"
-                ? "ENTRAR AL VAULT"
-                : "CREAR CUENTA"}
+              : tab === "reset"
+                ? "ENVIAR ENLACE"
+                : tab === "in"
+                  ? "ENTRAR AL VAULT"
+                  : "CREAR CUENTA"}
           </button>
         </form>
 
-        <button
-          className="btn ghost"
-          style={{ width: "100%", marginTop: 10 }}
-          onClick={guest}
-        >
-          JUGAR COMO INVITADO
-        </button>
+        {tab === "reset" ? (
+          <button
+            className="btn ghost"
+            style={{ width: "100%", marginTop: 10 }}
+            onClick={() => switchTab("in")}
+          >
+            VOLVER A INICIAR SESIÓN
+          </button>
+        ) : (
+          <>
+            <button
+              className="btn ghost"
+              style={{ width: "100%", marginTop: 10 }}
+              onClick={guest}
+            >
+              JUGAR COMO INVITADO
+            </button>
 
-        <div className="auth-divider">O CONTINÚA CON</div>
-        <div className="social">
-          <button
-            className="btn ghost"
-            type="button"
-            disabled={loading}
-            onClick={() => oauth("google")}
-          >
-            ◆ GOOGLE
-          </button>
-          <button
-            className="btn ghost"
-            type="button"
-            disabled={loading}
-            onClick={() => oauth("github")}
-          >
-            ▣ GITHUB
-          </button>
-        </div>
+            <div className="auth-divider">O CONTINÚA CON</div>
+            <div className="social">
+              <button
+                className="btn ghost"
+                type="button"
+                disabled={loading}
+                onClick={() => oauth("google")}
+              >
+                ◆ GOOGLE
+              </button>
+              <button
+                className="btn ghost"
+                type="button"
+                disabled={loading}
+                onClick={() => oauth("github")}
+              >
+                ▣ GITHUB
+              </button>
+            </div>
+          </>
+        )}
 
         <div
           style={{

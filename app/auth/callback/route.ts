@@ -27,5 +27,12 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  return NextResponse.redirect(new URL("/auth?error=callback", origin));
+  // Supabase reenvía error_code (p. ej. otp_expired) si el enlace es inválido.
+  const failure = new URL("/auth", origin);
+  failure.searchParams.set("error", "callback");
+  const reason = searchParams.get("error_code");
+  if (reason && /^[a-z_]{1,64}$/.test(reason)) {
+    failure.searchParams.set("reason", reason);
+  }
+  return NextResponse.redirect(failure);
 }
