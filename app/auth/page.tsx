@@ -1,26 +1,136 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useUser } from '@/components/UserContext';
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import type { AuthError } from "@supabase/supabase-js";
+import { createClient } from "@/lib/supabase/client";
 
-export default function Auth() {
-  const [tab, setTab] = useState<'in' | 'up'>('in');
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
-  const [pass, setPass] = useState('');
-  const { login } = useUser();
+// Solo rutas relativas (/…), nunca // ni /\ (anti open-redirect).
+function safeNext(next: string | null): string {
+  if (
+    next &&
+    next.startsWith("/") &&
+    !next.startsWith("//") &&
+    !next.startsWith("/\\")
+  ) {
+    return next;
+  }
+  return "/";
+}
+
+function authErrorMessage(err: AuthError): string {
+  switch (err.code) {
+    case "invalid_credentials":
+      return "Correo o contraseña incorrectos.";
+    case "email_not_confirmed":
+      return "Debes verificar tu correo antes de iniciar sesión.";
+    case "user_already_exists":
+    case "email_exists":
+      return "Ese correo ya está registrado.";
+    case "weak_password":
+      return "La contraseña es muy débil (mínimo 6 caracteres).";
+    case "over_email_send_rate_limit":
+    case "over_request_rate_limit":
+      return "Demasiados intentos. Espera un momento e inténtalo de nuevo.";
+    default:
+      return "Ocurrió un error. Inténtalo de nuevo.";
+  }
+}
+
+function AuthForm() {
+  const [tab, setTab] = useState<"in" | "up">("in");
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [pass, setPass] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const router = useRouter();
+  const params = useSearchParams();
+  const next = safeNext(params.get("next"));
+  const callbackError = params.get("error") === "callback";
 
-  const submit = (e: React.FormEvent) => {
+  const switchTab = (t: "in" | "up") => {
+    setTab(t);
+    setError(null);
+    setNotice(null);
+  };
+
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    login({ name: (username || 'PLAYER1').toUpperCase().slice(0, 10) });
-    router.push('/');
+    setError(null);
+    setNotice(null);
+    setLoading(true);
+    const supabase = createClient();
+
+    try {
+      if (tab === "in") {
+        const { error } = await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password: pass,
+        });
+        if (error) {
+          setError(authErrorMessage(error));
+          return;
+        }
+        router.push(next);
+        router.refresh();
+      } else {
+        const callback = new URL("/auth/callback", window.location.origin);
+        if (next !== "/") callback.searchParams.set("next", next);
+        const { data, error } = await supabase.auth.signUp({
+          email: email.trim(),
+          password: pass,
+          options: {
+            data: { username: username.trim() },
+            emailRedirectTo: callback.toString(),
+          },
+        });
+        if (error) {
+          setError(authErrorMessage(error));
+          return;
+        }
+        // Email ya registrado: Supabase devuelve un usuario sin identities.
+        if (data.user && data.user.identities?.length === 0) {
+          setError("Ese correo ya está registrado.");
+          return;
+        }
+        setNotice("Revisa tu correo para verificar tu cuenta.");
+        setPass("");
+      }
+    } catch {
+      setError("Ocurrió un error. Inténtalo de nuevo.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const oauth = async (provider: "google" | "github") => {
+    setError(null);
+    setNotice(null);
+    setLoading(true);
+    const callback = new URL("/auth/callback", window.location.origin);
+    callback.searchParams.set("next", next);
+    const { error } = await createClient().auth.signInWithOAuth({
+      provider,
+      options: { redirectTo: callback.toString() },
+    });
+    if (error) {
+      setError(authErrorMessage(error));
+      setLoading(false);
+    }
+    // Sin error: el navegador redirige al provider.
   };
 
   const guest = () => {
-    router.push('/');
+    router.push("/");
   };
+
+  const msgStyle = {
+    fontSize: 12,
+    marginTop: 10,
+    letterSpacing: "0.04em",
+  } as const;
 
   return (
     <div className="av-auth-wrap fade-in">
@@ -28,50 +138,149 @@ export default function Auth() {
         <div className="auth-header">
           <div className="mark" />
           <h2 className="neon-cyan">ARCADE VAULT</h2>
-          <div className="mono" style={{ fontSize: 11, color: 'var(--ink-faint)', letterSpacing: '0.16em', marginTop: 6 }}>
+          <div
+            className="mono"
+            style={{
+              fontSize: 11,
+              color: "var(--ink-faint)",
+              letterSpacing: "0.16em",
+              marginTop: 6,
+            }}
+          >
             ACCESO AL SISTEMA · v2.6
           </div>
         </div>
 
         <div className="auth-tabs">
-          <button className={tab === 'in' ? 'on' : ''} onClick={() => setTab('in')}>INICIAR SESIÓN</button>
-          <button className={tab === 'up' ? 'on' : ''} onClick={() => setTab('up')}>CREAR CUENTA</button>
+          <button
+            className={tab === "in" ? "on" : ""}
+            onClick={() => switchTab("in")}
+          >
+            INICIAR SESIÓN
+          </button>
+          <button
+            className={tab === "up" ? "on" : ""}
+            onClick={() => switchTab("up")}
+          >
+            CREAR CUENTA
+          </button>
         </div>
 
         <form onSubmit={submit}>
-          <div className="field">
-            <label>Usuario</label>
-            <input value={username} onChange={e => setUsername(e.target.value)} placeholder="px_kai" />
-          </div>
-          {tab === 'up' && (
+          {tab === "up" && (
             <div className="field slide-in">
-              <label>Correo electrónico</label>
-              <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="jugador@vault.gg" />
+              <label>Usuario</label>
+              <input
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="px_kai"
+                required
+                maxLength={20}
+              />
             </div>
           )}
           <div className="field">
-            <label>Contraseña</label>
-            <input type="password" value={pass} onChange={e => setPass(e.target.value)} placeholder="••••••••" />
+            <label>Correo electrónico</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="jugador@vault.gg"
+              required
+              autoComplete="email"
+            />
           </div>
-          <button className="btn lg" type="submit" style={{ width: '100%', marginTop: 8 }}>
-            {tab === 'in' ? 'ENTRAR AL VAULT' : 'CREAR Y JUGAR'}
+          <div className="field">
+            <label>Contraseña</label>
+            <input
+              type="password"
+              value={pass}
+              onChange={(e) => setPass(e.target.value)}
+              placeholder="••••••••"
+              required
+              minLength={6}
+              autoComplete={tab === "in" ? "current-password" : "new-password"}
+            />
+          </div>
+          {(error || callbackError) && (
+            <div
+              role="alert"
+              style={{ ...msgStyle, color: "var(--red, #ff4d6d)" }}
+            >
+              {error ??
+                "No se pudo completar la verificación. Inténtalo de nuevo."}
+            </div>
+          )}
+          {notice && (
+            <div
+              role="status"
+              style={{ ...msgStyle, color: "var(--cyan, #22e6ff)" }}
+            >
+              {notice}
+            </div>
+          )}
+          <button
+            className="btn lg"
+            type="submit"
+            disabled={loading}
+            style={{ width: "100%", marginTop: 8 }}
+          >
+            {loading
+              ? "PROCESANDO…"
+              : tab === "in"
+                ? "ENTRAR AL VAULT"
+                : "CREAR CUENTA"}
           </button>
         </form>
 
-        <button className="btn ghost" style={{ width: '100%', marginTop: 10 }} onClick={guest}>
+        <button
+          className="btn ghost"
+          style={{ width: "100%", marginTop: 10 }}
+          onClick={guest}
+        >
           JUGAR COMO INVITADO
         </button>
 
         <div className="auth-divider">O CONTINÚA CON</div>
         <div className="social">
-          <button className="btn ghost" type="button">◆  GOOGLE</button>
-          <button className="btn ghost" type="button">▣  GITHUB</button>
+          <button
+            className="btn ghost"
+            type="button"
+            disabled={loading}
+            onClick={() => oauth("google")}
+          >
+            ◆ GOOGLE
+          </button>
+          <button
+            className="btn ghost"
+            type="button"
+            disabled={loading}
+            onClick={() => oauth("github")}
+          >
+            ▣ GITHUB
+          </button>
         </div>
 
-        <div style={{ marginTop: 18, textAlign: 'center', fontSize: 11, color: 'var(--ink-faint)', letterSpacing: '0.1em' }}>
+        <div
+          style={{
+            marginTop: 18,
+            textAlign: "center",
+            fontSize: 11,
+            color: "var(--ink-faint)",
+            letterSpacing: "0.1em",
+          }}
+        >
           AL ENTRAR ACEPTAS LOS TÉRMINOS DEL SALÓN ARCADE
         </div>
       </div>
     </div>
+  );
+}
+
+export default function Auth() {
+  return (
+    <Suspense>
+      <AuthForm />
+    </Suspense>
   );
 }
