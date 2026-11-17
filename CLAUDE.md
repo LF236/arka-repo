@@ -26,12 +26,12 @@ Todo cambio funcional pasa por un spec en `specs/NN-slug.md` (estructura en `.cl
 
 ### Skills (`.claude/skills/<nombre>/SKILL.md`)
 
-| Skill             | Uso                                                                                               |
-| ----------------- | ------------------------------------------------------------------------------------------------- |
-| `/spec`           | Diseña un spec nuevo. No escribe código.                                                          |
-| `/spec-impl`      | Implementa un spec aprobado. Crea la rama `spec-NN-slug` (auto, ver `specs/.spec-config.yml`).    |
-| `/add-game`       | Genera el spec combinado juego + leaderboard. Solo spec; luego `/spec-impl`.                      |
-| `/spec-impl-game` | `/spec-impl` + al terminar lanza `skin-designer` → `mobile-porter`. Flujo: `/add-game` → este.    |
+| Skill             | Uso                                                                                            |
+| ----------------- | ---------------------------------------------------------------------------------------------- |
+| `/spec`           | Diseña un spec nuevo. No escribe código.                                                       |
+| `/spec-impl`      | Implementa un spec aprobado. Crea la rama `spec-NN-slug` (auto, ver `specs/.spec-config.yml`). |
+| `/add-game`       | Genera el spec combinado juego + leaderboard. Solo spec; luego `/spec-impl`.                   |
+| `/spec-impl-game` | `/spec-impl` + al terminar lanza `skin-designer` → `mobile-porter`. Flujo: `/add-game` → este. |
 
 - `/spec` y `/spec-impl` vienen de `Klerith/fernando-skills` (fuente en `.agents/skills/`, symlinks en `.claude/skills/`, versiones en `skills-lock.json`). No editarlos a mano.
 - `/add-game` y `/spec-impl-game` son locales.
@@ -60,17 +60,19 @@ Next.js 16 App Router con React 19 y TypeScript strict.
 
 ### Rutas (`app/`)
 
-| Ruta                  | Contenido                                                              |
-| --------------------- | ---------------------------------------------------------------------- |
-| `/`                   | Home                                                                   |
-| `/biblioteca`         | Catálogo de juegos                                                     |
-| `/juego/[id]`         | Ficha del juego + leaderboard lateral                                  |
-| `/juego/[id]/jugar`   | Reproductor: juego canvas si está en `CANVAS_GAMES`, si no player mock |
-| `/juego/<slug>/jugar` | Rutas estáticas por juego (arkanoid, frogger, snake, tetris; asteroides usa la dinámica)           |
-| `/salon`              | Salón de la fama (leaderboard global + tab por juego)                  |
-| `/acerca`             | About + formulario de contacto                                         |
-| `/auth`               | Login mock                                                             |
-| `/api/contact`        | POST → email vía Resend                                                |
+| Ruta                   | Contenido                                                                                |
+| ---------------------- | ---------------------------------------------------------------------------------------- |
+| `/`                    | Home                                                                                     |
+| `/biblioteca`          | Catálogo de juegos                                                                       |
+| `/juego/[id]`          | Ficha del juego + leaderboard lateral                                                    |
+| `/juego/[id]/jugar`    | Reproductor: juego canvas si está en `CANVAS_GAMES`, si no player mock                   |
+| `/juego/<slug>/jugar`  | Rutas estáticas por juego (arkanoid, frogger, snake, tetris; asteroides usa la dinámica) |
+| `/salon`               | Salón de la fama (leaderboard global + tab por juego)                                    |
+| `/acerca`              | About + formulario de contacto                                                           |
+| `/auth`                | Login/registro (Supabase Auth: email, Google, GitHub) + recuperar contraseña             |
+| `/auth/callback`       | GET → `exchangeCodeForSession`, redirige a `next` (solo rutas `/…`)                      |
+| `/auth/reset-password` | Nueva contraseña con la sesión de recuperación                                           |
+| `/api/contact`         | POST → email vía Resend                                                                  |
 
 ### Datos
 
@@ -79,12 +81,13 @@ Next.js 16 App Router con React 19 y TypeScript strict.
 - `components/GamePad.tsx` — gamepad virtual táctil (móvil, bajo `lg`).
 - `lib/supabase/client.ts` / `server.ts` — clientes `@supabase/ssr`.
 - `lib/supabase/leaderboard.ts` — única capa de acceso: `fetchCatalog`, `fetchRealGames`, `fetchTopScores`, `insertScore`. Todas capturan errores y degradan (catálogo → `GAMES`, scores → `[]`); no lanzan.
-- `components/UserContext.tsx` — auth mock en `localStorage` (`av_user`). No hay Supabase Auth; `scores.user_id` siempre `null`.
+- `components/UserContext.tsx` — Supabase Auth: `user` (`User` = `{ id, name, email, avatarUrl }`), `loading`, `signOut`; `toAppUser` mapea la sesión. `proxy.ts` + `lib/supabase/proxy.ts` refrescan la sesión por request.
+- Guardar score exige sesión (RLS `authenticated insert own scores`: `auth.uid() = user_id`). Invitado juega pero el modal de game over solo muestra CTA a `/auth?next=…`. `scores.player_name` = texto escrito; `user_id` = identidad. Filas históricas con `user_id` NULL.
 
 ### Supabase
 
 - Tablas: `games` (`slug` único, `name`, `active`, + campos de catálogo `short`, `long`, `cat`, `cover`, `color`, `best`, `plays`) y `scores` (`game_slug` FK, `player_name`, `score`, `user_id`, `created_at`).
-- RLS activo: lectura pública en ambas, insert público en `scores`.
+- RLS activo: lectura pública en ambas; insert en `scores` solo `authenticated` con `auth.uid() = user_id` (migración `20261116000000_auth_scores_rls.sql`).
 - Migraciones en `supabase/migrations/`. MCP `supabase` configurado en `.mcp.json` (gitignored) — usar `mcp__supabase__*` para SQL/migraciones.
 - Un juego es "real" si tiene fila `active` en `games`; el catálogo de Supabase manda sobre `lib/data.ts`, que solo rellena campos vacíos.
 
@@ -98,7 +101,7 @@ Patrón fijo; `asteroides` es la implementación canónica:
 - Se carga siempre con `dynamic(..., { ssr: false })` (usa `localStorage` en el estado inicial).
 - Assets en `public/` (`public/games/arkanoid/`, `public/snake/`).
 
-Claves `localStorage`: `av_user`, `av_player_name`, `av_skin` (skin global), `av_scores_<slug>` (y `av_scores` del player mock).
+Claves `localStorage`: `av_skin` (skin global), `av_scores_<slug>` (solo con sesión; y `av_scores` del player mock).
 
 Añadir un juego: `/add-game` → entrada en `GAMES`, `components/games/<slug>/`, ruta `jugar`, registro en `CANVAS_GAMES` (`app/juego/[id]/jugar/page.tsx`), fila en `games`. `/salon` y `/juego/[id]` no requieren cambios.
 

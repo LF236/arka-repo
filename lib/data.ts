@@ -18,7 +18,10 @@ export interface ScoreRow {
 }
 
 export interface User {
-  name: string;
+  id: string; // auth.users.id
+  name: string; // username ?? full_name ?? name ?? user_name ?? parte local del email
+  email: string | null;
+  avatarUrl: string | null; // avatar_url ?? picture ?? null
 }
 
 export const GAMES: Game[] = [

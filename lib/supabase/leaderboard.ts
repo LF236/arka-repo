@@ -104,6 +104,7 @@ export async function insertScore(
   gameSlug: string,
   playerName: string,
   score: number,
+  userId: string,
 ): Promise<void> {
   try {
     const supabase = createClient();
@@ -111,7 +112,7 @@ export async function insertScore(
       game_slug: gameSlug,
       player_name: playerName,
       score,
-      user_id: null,
+      user_id: userId,
     });
     if (error) throw error;
   } catch (err) {

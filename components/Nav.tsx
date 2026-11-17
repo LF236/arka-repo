@@ -6,6 +6,20 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useUser } from './UserContext';
 import { useSkin } from './SkinContext';
 import { SKIN_LABELS, type SkinId } from '@/lib/skins';
+import type { User } from '@/lib/data';
+
+function Avatar({ user }: { user: User }) {
+  return (
+    <span className="nav-avatar" aria-hidden="true">
+      {user.avatarUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={user.avatarUrl} alt="" referrerPolicy="no-referrer" />
+      ) : (
+        user.name.charAt(0).toUpperCase()
+      )}
+    </span>
+  );
+}
 
 const SKIN_IDS = Object.keys(SKIN_LABELS) as SkinId[];
 
@@ -13,7 +27,7 @@ export default function Nav() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
-  const { user, signOut } = useUser();
+  const { user, loading, signOut } = useUser();
   const { skin, setSkin } = useSkin();
 
   const skinButtons = SKIN_IDS.map((id) => (
@@ -36,10 +50,11 @@ export default function Nav() {
 
   const close = () => setOpen(false);
 
-  const handleSignOut = () => {
-    signOut();
+  const handleSignOut = async () => {
     close();
+    await signOut();
     router.push('/');
+    router.refresh();
   };
 
   return (
@@ -72,10 +87,16 @@ export default function Nav() {
           <span>CRÉDITOS · 03</span>
         </div>
 
-        {user ? (
-          <button className="btn ghost auth-btn" onClick={handleSignOut}>
-            {user.name} ▾
-          </button>
+        {loading ? (
+          <span className="auth-btn nav-auth-placeholder" aria-hidden="true" />
+        ) : user ? (
+          <div className="nav-user auth-btn">
+            <Avatar user={user} />
+            <span className="nav-user-name">{user.name}</span>
+            <button className="btn ghost" onClick={handleSignOut}>
+              Cerrar sesión
+            </button>
+          </div>
         ) : (
           <Link href="/auth" className="btn auth-btn">Iniciar Sesión</Link>
         )}
@@ -109,9 +130,21 @@ export default function Nav() {
         <Link href="/acerca" className={isActive('/acerca') ? 'active' : ''} onClick={close}>
           Acerca de
         </Link>
-        <Link href="/auth" className={isActive('/auth') ? 'active' : ''} onClick={close}>
-          {user ? 'Cuenta' : 'Iniciar Sesión'}
-        </Link>
+        {loading ? null : user ? (
+          <>
+            <div className="nav-user nav-user-panel">
+              <Avatar user={user} />
+              <span className="nav-user-name">{user.name}</span>
+            </div>
+            <button type="button" className="btn ghost" onClick={handleSignOut}>
+              Cerrar sesión
+            </button>
+          </>
+        ) : (
+          <Link href="/auth" className={isActive('/auth') ? 'active' : ''} onClick={close}>
+            Iniciar Sesión
+          </Link>
+        )}
         <div className="skin-selector panel-skins" role="group" aria-label="Tema visual">
           <span className="skin-selector-label">TEMA</span>
           {skinButtons}
