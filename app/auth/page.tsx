@@ -4,19 +4,7 @@ import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { AuthError } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
-
-// Solo rutas relativas (/…), nunca // ni /\ (anti open-redirect).
-function safeNext(next: string | null): string {
-  if (
-    next &&
-    next.startsWith("/") &&
-    !next.startsWith("//") &&
-    !next.startsWith("/\\")
-  ) {
-    return next;
-  }
-  return "/";
-}
+import { safeNext } from "@/lib/safe-next";
 
 function authErrorMessage(err: AuthError): string {
   switch (err.code) {

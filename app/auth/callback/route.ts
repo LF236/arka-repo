@@ -1,18 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-
-// Solo rutas relativas (/…), nunca // ni /\ (anti open-redirect).
-function safeNext(next: string | null): string {
-  if (
-    next &&
-    next.startsWith("/") &&
-    !next.startsWith("//") &&
-    !next.startsWith("/\\")
-  ) {
-    return next;
-  }
-  return "/";
-}
+import { safeNext } from "@/lib/safe-next";
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = request.nextUrl;
