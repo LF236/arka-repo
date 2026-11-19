@@ -45,6 +45,7 @@ Todos sin preguntas ni commits; los de `model: sonnet` corren en Sonnet.
 - `skin-designer` — implementa skins (clásico/neon/retro) en un juego; actualiza `references/game-with-themes.md`.
 - `mobile-porter` — porta a móvil un juego nuevo (`<GamePad>`, SPEC 11).
 - `game-performance-booster` — audita y arregla rendimiento de un juego (SPEC 13).
+- `security-auditor` — audita seguridad de DB Supabase + app Next (línea base SPEC 14/15). Solo audita; bitácora en `references/security/audit-log.md`. Memoria en `.claude/agent-memory/security-auditor/`.
 
 Flujos: `game-planner` → `/add-game` → `/spec-impl-game`; `game-jam` → promover spec a `specs/NN-slug.md` → `/spec-impl`.
 
@@ -81,13 +82,13 @@ Next.js 16 App Router con React 19 y TypeScript strict.
 - `components/GamePad.tsx` — gamepad virtual táctil (móvil, bajo `lg`).
 - `lib/supabase/client.ts` / `server.ts` — clientes `@supabase/ssr`.
 - `lib/supabase/leaderboard.ts` — única capa de acceso: `fetchCatalog`, `fetchRealGames`, `fetchTopScores`, `insertScore`. Todas capturan errores y degradan (catálogo → `GAMES`, scores → `[]`); no lanzan.
-- `components/UserContext.tsx` — Supabase Auth: `user` (`User` = `{ id, name, email, avatarUrl }`), `loading`, `signOut`; `toAppUser` mapea la sesión. `proxy.ts` + `lib/supabase/proxy.ts` refrescan la sesión por request.
+- `components/UserContext.tsx` — Supabase Auth: `user` (`User` = `{ id, name, email, avatarUrl }`), `loading`, `signOut`; `toAppUser` mapea la sesión. `proxy.ts` + `lib/supabase/proxy.ts` refrescan la sesión por request y aplican headers de seguridad (`lib/security-headers.ts`: `nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy`) en todas las respuestas, incluido el redirect de `/auth`.
 - Guardar score exige sesión (RLS `authenticated insert own scores`: `auth.uid() = user_id`). Invitado juega pero el modal de game over solo muestra CTA a `/auth?next=…`. `scores.player_name` = texto escrito; `user_id` = identidad. Filas históricas con `user_id` NULL.
 
 ### Supabase
 
 - Tablas: `games` (`slug` único, `name`, `active`, + campos de catálogo `short`, `long`, `cat`, `cover`, `color`, `best`, `plays`) y `scores` (`game_slug` FK, `player_name`, `score`, `user_id`, `created_at`).
-- RLS activo: lectura pública en ambas; insert en `scores` solo `authenticated` con `auth.uid() = user_id` (migración `20261116000000_auth_scores_rls.sql`).
+- RLS activo: lectura pública en ambas; insert en `scores` solo `authenticated` con `auth.uid() = user_id` (migración `20261116000000_auth_scores_rls.sql`). Grants endurecidos (`20261118000000_security_hardening.sql`): `anon` solo SELECT; `authenticated` solo SELECT + INSERT en `scores`; nadie hace UPDATE/DELETE ni escribe en `games` (catálogo por migración/MCP).
 - Migraciones en `supabase/migrations/`. MCP `supabase` configurado en `.mcp.json` (gitignored) — usar `mcp__supabase__*` para SQL/migraciones.
 - Un juego es "real" si tiene fila `active` en `games`; el catálogo de Supabase manda sobre `lib/data.ts`, que solo rellena campos vacíos.
 
