@@ -45,6 +45,7 @@ Todos sin preguntas ni commits; los de `model: sonnet` corren en Sonnet.
 - `skin-designer` — implementa skins (clásico/neon/retro) en un juego; actualiza `references/game-with-themes.md`.
 - `mobile-porter` — porta a móvil un juego nuevo (`<GamePad>`, SPEC 11).
 - `game-performance-booster` — audita y arregla rendimiento de un juego (SPEC 13).
+- `security-auditor` — audita seguridad de DB Supabase + app Next (línea base SPEC 14/15). Solo audita; bitácora en `references/security/audit-log.md`. Memoria en `.claude/agent-memory/security-auditor/`.
 
 Flujos: `game-planner` → `/add-game` → `/spec-impl-game`; `game-jam` → promover spec a `specs/NN-slug.md` → `/spec-impl`.
 
